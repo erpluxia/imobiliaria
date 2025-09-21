@@ -67,11 +67,6 @@ export default function Results() {
               if (e.key === 'Enter') updateParam('city', (e.target as HTMLInputElement).value)
             }}
           />
-          <div className="hidden md:flex items-center gap-2 text-sm">
-            {['Mobiliado', 'Aceita pets', 'Piscina', 'Varanda'].map((chip) => (
-              <button key={chip} className="px-3 py-1.5 rounded-full border bg-white hover:bg-gray-50">{chip}</button>
-            ))}
-          </div>
         </div>
         <div className="flex items-center gap-2">
           <select className="border rounded-md px-3 py-2 text-sm" defaultValue="relevance" onChange={(e) => updateParam('sort', e.target.value)}>
@@ -80,7 +75,6 @@ export default function Results() {
             <option value="price_desc">Maior preço</option>
             <option value="area_desc">Maior área</option>
           </select>
-          <button className="px-3 py-2 rounded-md border text-sm">🗺️ Mapa</button>
           <Link to="/" className="px-3 py-2 rounded-md border bg-white text-sm">Nova busca</Link>
         </div>
       </div>
