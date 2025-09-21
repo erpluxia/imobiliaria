@@ -12,7 +12,7 @@ function App() {
           <Link to="/" className="text-2xl font-extrabold tracking-tight">
             <span className="text-indigo-600">Imobi</span><span className="text-gray-900">Finder</span>
           </Link>
-          <nav className="flex items-center gap-6 text-sm">
+          <nav className="hidden sm:flex items-center gap-6 text-sm">
             <NavLink to="/" className={({isActive}) => `hover:text-indigo-600 ${isActive ? 'text-indigo-600 font-semibold' : ''}`}>Home</NavLink>
             <NavLink to="/resultados" className={({isActive}) => `hover:text-indigo-600 ${isActive ? 'text-indigo-600 font-semibold' : ''}`}>Resultados</NavLink>
           </nav>
