@@ -1,19 +1,25 @@
 import type { FormEvent } from 'react'
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { saveUserProperty, type Property } from '../data/properties'
+import { supabase } from '../lib/supabaseClient'
 
-function uid() {
-  return Math.random().toString(36).slice(2, 10)
-}
-
-type Preview = { name: string; dataUrl: string }
+type Preview = { name: string; dataUrl: string; file?: File }
 
 export default function CreateListing() {
   const navigate = useNavigate()
-  const [imagesText, setImagesText] = useState('')
   const [previews, setPreviews] = useState<Preview[]>([])
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [successSlug, setSuccessSlug] = useState<string | null>(null)
+  const [priceDigits, setPriceDigits] = useState<string>('') // somente dígitos em centavos
+
+  const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+  const priceDisplay = priceDigits ? brl.format(Number(priceDigits) / 100) : ''
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D+/g, '')
+    setPriceDigits(digits)
+  }
 
   const readFilesAsDataUrl = useCallback(async (files: FileList | null) => {
     if (!files) return [] as Preview[]
@@ -21,7 +27,7 @@ export default function CreateListing() {
       (file) =>
         new Promise<Preview>((resolve, reject) => {
           const fr = new FileReader()
-          fr.onload = () => resolve({ name: file.name, dataUrl: String(fr.result) })
+          fr.onload = () => resolve({ name: file.name, dataUrl: String(fr.result), file })
           fr.onerror = () => reject(fr.error)
           fr.readAsDataURL(file)
         })
@@ -45,51 +51,101 @@ export default function CreateListing() {
     setPreviews((prev) => prev.filter((p) => p.name !== name))
   }
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    setSubmitting(true)
+    setSubmitError(null)
+    setSuccessSlug(null)
+
     const fd = new FormData(e.currentTarget)
 
-    const price = Number(fd.get('price') || 0)
+    const price = priceDigits ? Number(priceDigits) / 100 : 0
     const bedrooms = Number(fd.get('bedrooms') || 0)
     const bathrooms = Number(fd.get('bathrooms') || 0)
     const parking = Number(fd.get('parking') || 0)
     const area = Number(fd.get('area') || 0)
 
-    const urlImages = (imagesText || '').split(/\n|,|;|\s+/).map(s => s.trim()).filter(Boolean)
-    const fileImages = previews.map(p => p.dataUrl)
-    const images = [...fileImages, ...urlImages]
+    try {
+      // 1) Valida usuário logado
+      const { data: { user }, error: userErr } = await supabase.auth.getUser()
+      if (userErr) throw userErr
+      if (!user) throw new Error('Você precisa estar logado para anunciar.')
 
-    const p: Property = {
-      id: uid(),
-      title: String(fd.get('title') || ''),
-      description: String(fd.get('description') || ''),
-      city: String(fd.get('city') || ''),
-      neighborhood: String(fd.get('neighborhood') || ''),
-      address: String(fd.get('address') || ''),
-      price,
-      bedrooms,
-      bathrooms,
-      parking,
-      area,
-      type: (fd.get('type') as Property['type']) || 'apartment',
-      business: (fd.get('business') as Property['business']) || 'sale',
-      latitude: 0,
-      longitude: 0,
-      images: images.length > 0 ? images : [
-        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=1200&auto=format&fit=crop&q=80'
-      ],
-      features: []
+      // 2) Criar imóvel
+      const insertRes = await supabase
+        .from('properties')
+        .insert({
+          owner_id: user.id,
+          title: String(fd.get('title') || ''),
+          description: String(fd.get('description') || ''),
+          city: String(fd.get('city') || ''),
+          neighborhood: String(fd.get('neighborhood') || ''),
+          address: String(fd.get('address') || ''),
+          price: isNaN(price) ? null : price,
+          bedrooms: isNaN(bedrooms) ? null : bedrooms,
+          bathrooms: isNaN(bathrooms) ? null : bathrooms,
+          parking_spaces: isNaN(parking) ? null : parking,
+          area_m2: isNaN(area) ? null : area,
+          type: String(fd.get('type') || ''),
+          business: String(fd.get('business') || 'sale'),
+          is_active: true,
+        })
+        .select('id, slug')
+        .single()
+
+      if (insertRes.error) throw insertRes.error
+      const propertyId = insertRes.data.id as string
+      const slug = insertRes.data.slug as string
+
+      // 3) Upload múltiplo de arquivos selecionados
+      const uploadedUrls: string[] = []
+      for (const p of previews) {
+        if (!p.file) continue
+        const ext = p.file.name.split('.').pop()?.toLowerCase() || 'jpg'
+        const path = `${user.id}/${propertyId}/${crypto.randomUUID()}.${ext}`
+        const up = await supabase.storage.from('property-images').upload(path, p.file, {
+          cacheControl: '3600', upsert: false,
+        })
+        if (up.error) throw up.error
+        const { data: pub } = supabase.storage.from('property-images').getPublicUrl(path)
+        const publicUrl = pub.publicUrl
+        uploadedUrls.push(publicUrl)
+        const insImg = await supabase.from('property_images').insert({
+          property_id: propertyId,
+          storage_path: path,
+          url: publicUrl,
+          position: 0,
+        })
+        if (insImg.error) throw insImg.error
+      }
+
+      // 5) Definir capa
+      if (uploadedUrls.length > 0) {
+        const cover = uploadedUrls[0]
+        const upCov = await supabase.from('properties').update({ cover_image_url: cover }).eq('id', propertyId)
+        if (upCov.error) throw upCov.error
+      }
+
+      // 6) Redirecionar automaticamente para o link por slug
+      setSuccessSlug(slug)
+      navigate(`/imovel/${slug}`)
+    } catch (err: any) {
+      setSubmitError(err.message ?? 'Erro ao publicar anúncio')
+    } finally {
+      setSubmitting(false)
     }
-
-    saveUserProperty(p)
-    navigate(`/imovel/${p.id}`)
   }
 
   return (
     <section className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold">Anunciar imóvel</h1>
-      <p className="text-gray-600 mt-1 text-sm">Os anúncios são salvos localmente (apenas no seu navegador) neste MVP.</p>
+      {successSlug ? (
+        <div className="mt-2 p-3 rounded-md bg-green-50 text-green-800 text-sm">
+          Anúncio publicado! Link: <a className="underline" href={`/imovel/${successSlug}`}>{window.location.origin}/imovel/{successSlug}</a>
+        </div>
+      ) : (
+        <p className="text-gray-600 mt-1 text-sm">Preencha os dados e publique seu anúncio.</p>
+      )}
 
       {/* Bloco: Descrição do imóvel */}
       <div className="mt-6 max-w-3xl mx-auto rounded-2xl shadow-sm overflow-hidden bg-white">
@@ -131,7 +187,14 @@ export default function CreateListing() {
 
           <div>
             <label className="text-sm font-semibold text-gray-700">Preço (R$)</label>
-            <input name="price" type="number" inputMode="numeric" className="mt-2 w-full h-11 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="320000" />
+            <input
+              name="price"
+              value={priceDisplay}
+              onChange={handlePriceChange}
+              inputMode="numeric"
+              className="mt-2 w-full h-11 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="R$ 320.000,00"
+            />
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700">Área (m²)</label>
@@ -176,12 +239,6 @@ export default function CreateListing() {
               </div>
             </div>
 
-            {/* URLs de imagem como alternativa */}
-            <div className="px-6 pb-6">
-              <label className="text-sm font-semibold text-gray-700">Ou cole URLs (separadas por vírgula, espaço ou quebra de linha)</label>
-              <textarea value={imagesText} onChange={(e) => setImagesText(e.target.value)} rows={2} className="mt-2 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://...jpg, https://...jpg" />
-            </div>
-
             {/* Pré-visualização */}
             {previews.length > 0 && (
               <div className="px-6 pb-6">
@@ -200,10 +257,11 @@ export default function CreateListing() {
 
           <div className="md:col-span-2 flex items-center justify-end gap-4 pt-4 md:pt-6">
             <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 rounded-md border">Cancelar</button>
-            <button type="submit" className="bg-indigo-600 text-white rounded-md px-4 py-2 hover:bg-indigo-700">Publicar anúncio</button>
+            <button type="submit" disabled={submitting} className={`bg-indigo-600 text-white rounded-md px-4 py-2 hover:bg-indigo-700 ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}>{submitting ? 'Publicando...' : 'Publicar anúncio'}</button>
           </div>
         </form>
       </div>
+      {submitError && <p className="mt-4 text-red-600 text-sm">{submitError}</p>}
     </section>
   )
 }

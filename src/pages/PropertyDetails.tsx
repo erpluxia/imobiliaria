@@ -1,21 +1,108 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { findPropertyById } from '../data/properties'
+import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../auth/AuthContext'
 
 export default function PropertyDetails() {
-  const { id } = useParams()
-  const p = id ? findPropertyById(id) : undefined
-
-  if (!p) return (
-    <section className="max-w-7xl mx-auto px-4 py-10">
-      <p className="text-gray-600">Imóvel não encontrado.</p>
-      <Link to="/resultados" className="text-indigo-600 hover:underline">Voltar</Link>
-    </section>
-  )
-
-  const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price)
-
+  const { slug, id } = useParams()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [p, setP] = useState<any | null>(null)
+  const [images, setImages] = useState<string[]>([])
   const [current, setCurrent] = useState(0)
+  const [ownerPhone, setOwnerPhone] = useState<string | null>(null)
+  const { user } = useAuth()
+
+  useEffect(() => {
+    let active = true
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        let property: any | null = null
+        if (slug) {
+          const { data, error } = await supabase
+            .from('properties')
+            .select('*')
+            .eq('slug', slug)
+            .single()
+          if (error) throw error
+          property = data
+        } else if (id) {
+          const { data, error } = await supabase
+            .from('properties')
+            .select('*')
+            .eq('id', id)
+            .single()
+          if (error) throw error
+          property = data
+        }
+        if (!property) {
+          if (active) { setP(null) }
+          return
+        }
+        // imagens
+        const imgs: string[] = []
+        if (property.cover_image_url) imgs.push(property.cover_image_url)
+        const { data: moreImgs, error: imgErr } = await supabase
+          .from('property_images')
+          .select('url')
+          .eq('property_id', property.id)
+          .order('position', { ascending: true })
+          .limit(20)
+        if (imgErr) throw imgErr
+        if (moreImgs) {
+          for (const it of moreImgs) {
+            if (it.url && !imgs.includes(it.url)) imgs.push(it.url)
+          }
+        }
+        // buscar telefone do proprietário no perfil
+        try {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('phone')
+            .eq('id', property.owner_id)
+            .single()
+          if (active) setOwnerPhone(prof?.phone ?? null)
+        } catch (_) {
+          if (active) setOwnerPhone(null)
+        }
+
+        if (active) {
+          setP(property)
+          setImages(imgs)
+        }
+      } catch (e: any) {
+        if (active) setError(e.message ?? 'Erro ao carregar imóvel')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    load()
+    return () => { active = false }
+  }, [slug, id])
+
+  const priceText = useMemo(() => {
+    if (!p?.price) return undefined
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price)
+  }, [p])
+
+  if (loading) {
+    return (
+      <section className="max-w-7xl mx-auto px-4 py-10">
+        <p className="text-gray-600">Carregando...</p>
+      </section>
+    )
+  }
+
+  if (error || !p) {
+    return (
+      <section className="max-w-7xl mx-auto px-4 py-10">
+        <p className="text-gray-600">Imóvel não encontrado.</p>
+        <Link to="/resultados" className="text-indigo-600 hover:underline">Voltar</Link>
+      </section>
+    )
+  }
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-6">
@@ -35,8 +122,8 @@ export default function PropertyDetails() {
           <p className="text-gray-600">{p.address} — {p.neighborhood}, {p.city}</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl md:text-3xl font-bold text-gray-900">{p.business === 'rent' ? `${price}/mês` : price}</div>
-          <div className="text-xs text-gray-500">{p.type === 'apartment' ? 'Apartamento' : p.type === 'house' ? 'Casa' : 'Comercial'} • {p.area} m²</div>
+          <div className="text-2xl md:text-3xl font-bold text-gray-900">{p.business === 'rent' ? `${priceText ?? '—'}/mês` : (priceText ?? '—')}</div>
+          <div className="text-xs text-gray-500">{p.type === 'apartment' ? 'Apartamento' : p.type === 'house' ? 'Casa' : 'Comercial'} • {p.area_m2 ?? '—'} m²</div>
         </div>
       </div>
 
@@ -44,11 +131,11 @@ export default function PropertyDetails() {
       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="md:col-span-2 rounded-xl overflow-hidden">
           <div className="relative aspect-[16/9] bg-gray-100">
-            <img src={p.images[current] ?? p.images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
+            <img src={images[current] ?? images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
           </div>
           {/* Thumbs */}
           <div className="mt-3 grid grid-cols-4 gap-2">
-            {p.images.slice(0, 8).map((src, idx) => (
+            {images.slice(0, 8).map((src, idx) => (
               <button key={src+idx} onClick={() => setCurrent(idx)} className={`relative aspect-[4/3] rounded-lg overflow-hidden border ${current === idx ? 'ring-2 ring-indigo-600' : ''}`}>
                 <img src={src} alt={p.title + ' thumb'} className="absolute inset-0 w-full h-full object-cover" />
               </button>
@@ -57,17 +144,17 @@ export default function PropertyDetails() {
         </div>
         <div className="grid grid-rows-2 gap-3">
           <div className="rounded-xl overflow-hidden aspect-video bg-gray-100 relative">
-            <img src={p.images[1] ?? p.images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
+            <img src={images[1] ?? images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
           </div>
           <div className="rounded-xl overflow-hidden aspect-video bg-gray-100 relative">
-            <img src={p.images[2] ?? p.images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
+            <img src={images[2] ?? images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
           </div>
         </div>
       </div>
-      <div className="mt-2 flex items-center gap-2 text-sm">
-        <button className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border bg-white text-gray-700 hover:bg-gray-50">📷 30 fotos</button>
-        <button className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border bg-white text-gray-700 hover:bg-gray-50">🎬 Vídeo</button>
-        <button className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border bg-white text-gray-700 hover:bg-gray-50">🗺️ Mapa</button>
+      <div className="mt-2">
+        <span className="inline-flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-full border bg-white text-gray-700">
+          📷 {images.length} {images.length === 1 ? 'foto' : 'fotos'}
+        </span>
       </div>
 
       {/* Conteúdo principal */}
@@ -79,7 +166,7 @@ export default function PropertyDetails() {
             <div className="grid sm:grid-cols-3 gap-4 text-sm">
               <div className="rounded-xl border p-4">
                 <div className="text-gray-500">Imóvel</div>
-                <div className="text-xl font-bold">{p.business === 'rent' ? `${price}/mês` : price}</div>
+                <div className="text-xl font-bold">{p.business === 'rent' ? `${priceText ?? '—'}/mês` : (priceText ?? '—')}</div>
               </div>
               <div className="rounded-xl border p-4">
                 <div className="text-gray-500">Condomínio</div>
@@ -96,13 +183,10 @@ export default function PropertyDetails() {
           <section className="bg-white border rounded-2xl p-5">
             <h2 className="text-lg font-semibold mb-4">Características</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm text-gray-800">
-              <div className="flex items-center gap-2">🏠 <span>{p.area} m²</span></div>
-              <div className="flex items-center gap-2">🛏️ <span>{p.bedrooms} quartos</span></div>
-              <div className="flex items-center gap-2">🛁 <span>{p.bathrooms} banheiros</span></div>
-              <div className="flex items-center gap-2">🚗 <span>{p.parking} vagas</span></div>
-              {p.features.map((f) => (
-                <div key={f} className="flex items-center gap-2">✅ <span>{f}</span></div>
-              ))}
+              <div className="flex items-center gap-2">🏠 <span>{p.area_m2 ?? '—'} m²</span></div>
+              <div className="flex items-center gap-2">🛏️ <span>{p.bedrooms ?? 0} quartos</span></div>
+              <div className="flex items-center gap-2">🛁 <span>{p.bathrooms ?? 0} banheiros</span></div>
+              <div className="flex items-center gap-2">🚗 <span>{p.parking_spaces ?? 0} vagas</span></div>
             </div>
           </section>
 
@@ -119,7 +203,7 @@ export default function PropertyDetails() {
                 loading="lazy"
                 allowFullScreen
                 referrerPolicy="no-referrer-when-downgrade"
-                src={`https://www.google.com/maps?q=${p.latitude},${p.longitude}&hl=pt-BR&z=15&output=embed`}
+                src={`https://www.google.com/maps?q=${encodeURIComponent('São Paulo, SP')}&hl=pt-BR&z=12&output=embed`}
               />
             </div>
           </section>
@@ -127,47 +211,64 @@ export default function PropertyDetails() {
           {/* Descrição */}
           <section className="bg-white border rounded-2xl p-5">
             <h2 className="text-lg font-semibold mb-3">Descrição</h2>
-            <p className="text-gray-700 leading-relaxed">
-              {p.description}
-            </p>
+            <p className="text-gray-700 leading-relaxed">{p.description}</p>
           </section>
         </div>
 
         {/* Sidebar de contato */}
         <aside className="bg-white border rounded-2xl p-5 h-fit">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-indigo-100 text-indigo-700 grid place-items-center font-bold">RI</div>
-            <div>
-              <div className="font-semibold">Rofe Imóveis</div>
-              <div className="text-xs text-gray-500">Creci: 0/00-0 — SP</div>
-            </div>
-          </div>
-          <div className="mt-3 text-xs text-gray-600">★ ★ ★ ★ ☆ (2 avaliações) • 166 imóveis cadastrados</div>
 
-          <form className="mt-5 grid gap-3">
-            <input required placeholder="Seu nome" className="border rounded-md px-3 py-2" />
-            <input required type="email" placeholder="Seu e-mail" className="border rounded-md px-3 py-2" />
-            <input required placeholder="Seu telefone" className="border rounded-md px-3 py-2" />
-            <textarea rows={4} defaultValue={`Olá, gostaria de ter mais informações sobre: ${p.title}, ${p.address} — ${p.neighborhood}, ${p.city}.`} className="border rounded-md px-3 py-2" />
-            <label className="text-xs text-gray-600 flex items-start gap-2">
-              <input type="checkbox" className="mt-1" /> Receber ofertas similares.
-            </label>
-            <button className="bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-700">Enviar mensagem</button>
+          <form
+            className="grid gap-3"
+            onSubmit={async (e) => {
+              e.preventDefault()
+              const fd = new FormData(e.currentTarget)
+              const name = String(fd.get('name') || '')
+              const email = String(fd.get('email') || '')
+              const phone = String(fd.get('phone') || '')
+              const content = String(fd.get('message') || '')
+
+              // construir link do imóvel
+              const base = typeof window !== 'undefined' ? window.location.origin : 'https://imobiliaria.example'
+              const link = p.slug ? `${base}/imovel/${p.slug}` : `${base}/imovel/id/${p.id}`
+
+              // telefone do dono
+              let target = ownerPhone || ''
+              // sanear para dígitos e tentar formatação BR
+              const digits = target.replace(/\D+/g, '')
+              if (digits.startsWith('55')) target = digits
+              else if (digits.length === 11) target = `55${digits}`
+              else target = digits
+
+              // salvar mensagem no Supabase
+              try {
+                await supabase.from('messages').insert({
+                  property_id: p.id,
+                  owner_id: p.owner_id,
+                  sender_id: user?.id ?? null,
+                  sender_name: name || null,
+                  sender_email: email || null,
+                  sender_phone: phone || null,
+                  content: content || null,
+                })
+              } catch (_) {
+                // mantém silencioso para não bloquear o WhatsApp
+              }
+
+              const text = `Olá! Meu nome é ${name}.\nE-mail: ${email}\nTelefone: ${phone}\n\nTenho interesse no anúncio: ${p.title}\nLink: ${link}\n\nMensagem: ${content}`
+              const url = `https://wa.me/${encodeURIComponent(target)}?text=${encodeURIComponent(text)}`
+              window.open(url, '_blank')
+            }}
+          >
+            <input name="name" required placeholder="Seu nome" className="border rounded-md px-3 py-2" />
+            <input name="email" required type="email" placeholder="Seu e-mail" className="border rounded-md px-3 py-2" />
+            <input name="phone" required placeholder="Seu telefone" className="border rounded-md px-3 py-2" />
+            <textarea name="message" rows={4} defaultValue={`Olá, gostaria de ter mais informações sobre: ${p.title}, ${p.address} — ${p.neighborhood}, ${p.city}.`} className="border rounded-md px-3 py-2" />
+            <button type="submit" className="bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-700">Enviar mensagem</button>
           </form>
 
           <div className="mt-4 text-sm text-gray-600">
             Ao clicar em "Enviar mensagem" você concorda com os Termos de uso e com a nossa Política de privacidade.
-          </div>
-
-          <div className="mt-4 border-t pt-4 text-sm">
-            <div className="text-gray-600">Fale com o anunciante</div>
-            <div className="mt-2 flex items-center gap-2">
-              <span>📞</span>
-              <a className="text-indigo-600 hover:underline" href="tel:+5511999999999">(11) 99999-9999</a>
-            </div>
-            <a className="mt-3 inline-flex items-center justify-center gap-2 w-full bg-green-600 text-white rounded-md px-4 py-2 hover:bg-green-700" href="#">
-              <span>🟢</span> WhatsApp
-            </a>
           </div>
         </aside>
       </div>

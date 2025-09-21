@@ -1,22 +1,51 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { getAllProperties, filterProperties, type Query } from '../data/properties'
+import { supabase } from '../lib/supabaseClient'
 import ListingRow from '../components/ListingRow'
 
 export default function Results() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [list, setList] = useState<any[]>([])
 
-  const query: Query = useMemo(() => ({
+  const query = useMemo(() => ({
     q: params.get('q') ?? undefined,
     city: params.get('city') ?? undefined,
-    business: (params.get('business') as Query['business']) ?? undefined,
+    business: params.get('business') ?? undefined,
     minPrice: params.get('minPrice') ? Number(params.get('minPrice')) : undefined,
     maxPrice: params.get('maxPrice') ? Number(params.get('maxPrice')) : undefined,
     bedrooms: params.get('bedrooms') ? Number(params.get('bedrooms')) : undefined,
   }), [params])
 
-  const list = useMemo(() => filterProperties(getAllProperties(), query), [query])
+  useEffect(() => {
+    let active = true
+    async function fetchData() {
+      setLoading(true)
+      setError(null)
+      try {
+        let q = supabase.from('properties').select('*').eq('is_active', true).order('created_at', { ascending: false })
+        if (query.city) q = q.ilike('city', `%${query.city}%`)
+        if (query.business) q = q.eq('business', query.business)
+        if (typeof query.bedrooms === 'number') q = q.gte('bedrooms', query.bedrooms)
+        if (typeof query.minPrice === 'number') q = q.gte('price', query.minPrice)
+        if (typeof query.maxPrice === 'number') q = q.lte('price', query.maxPrice)
+        // Texto livre básico em title/description
+        if (query.q) q = q.or(`title.ilike.%${query.q}%,description.ilike.%${query.q}%`)
+
+        const { data, error } = await q.limit(50)
+        if (error) throw error
+        if (active) setList(data ?? [])
+      } catch (e: any) {
+        if (active) setError(e.message ?? 'Erro ao buscar imóveis')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    fetchData()
+    return () => { active = false }
+  }, [query])
 
   function updateParam(name: string, value: string) {
     const next = new URLSearchParams(params)
@@ -128,10 +157,12 @@ export default function Results() {
 
         {/* Lista */}
         <div className="space-y-4">
-          {list.map((p) => (
+          {loading && <div className="text-center text-gray-600">Carregando...</div>}
+          {error && <div className="text-center text-red-600">{error}</div>}
+          {!loading && !error && list.map((p) => (
             <ListingRow key={p.id} p={p} />
           ))}
-          {list.length === 0 && (
+          {!loading && !error && list.length === 0 && (
             <div className="text-center text-gray-600">Nenhum imóvel encontrado.</div>
           )}
         </div>

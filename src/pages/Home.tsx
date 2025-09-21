@@ -1,9 +1,50 @@
+import { useEffect, useState } from 'react'
 import SearchBar from '../components/SearchBar'
 import ListingCard from '../components/ListingCard'
-import { PROPERTIES } from '../data/properties'
+import { supabase } from '../lib/supabaseClient'
 
 export default function Home() {
-  const featured = PROPERTIES.slice(0, 6)
+  const [featured, setFeatured] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [cities, setCities] = useState<string[]>([])
+
+  useEffect(() => {
+    let active = true
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(6)
+        if (error) throw error
+        if (active) setFeatured(data ?? [])
+
+        // Buscar cidades com imóveis ativos
+        const { data: cityRows, error: cityErr } = await supabase
+          .from('properties')
+          .select('city')
+          .eq('is_active', true)
+          .not('city', 'is', null)
+          .neq('city', '')
+          .order('city', { ascending: true })
+          .limit(1000)
+        if (cityErr) throw cityErr
+        const uniq = Array.from(new Set((cityRows ?? []).map(r => String(r.city))))
+        if (active) setCities(uniq)
+      } catch (e: any) {
+        if (active) setError(e.message ?? 'Erro ao carregar destaques')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    load()
+    return () => { active = false }
+  }, [])
 
   return (
     <>
@@ -18,13 +59,15 @@ export default function Home() {
           <div className="mt-8 bg-white p-4 md:p-6 rounded-2xl shadow-lg border">
             <SearchBar />
           </div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {['São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Curitiba'].map((c) => (
-              <a key={c} href={`/resultados?city=${encodeURIComponent(c)}`} className="inline-flex items-center gap-2 bg-white border text-gray-700 px-3 py-2 rounded-full hover:bg-gray-50 text-sm shadow-sm">
-                <span className="inline-block h-2 w-2 rounded-full bg-indigo-500" /> {c}
-              </a>
-            ))}
-          </div>
+          {cities.length > 0 && (
+            <div className="mt-6 flex flex-wrap gap-3">
+              {cities.slice(0, 12).map((c) => (
+                <a key={c} href={`/resultados?city=${encodeURIComponent(c)}`} className="inline-flex items-center gap-2 bg-white border text-gray-700 px-3 py-2 rounded-full hover:bg-gray-50 text-sm shadow-sm">
+                  <span className="inline-block h-2 w-2 rounded-full bg-indigo-500" /> {c}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -35,9 +78,14 @@ export default function Home() {
           <a href="/resultados" className="text-sm text-indigo-600 hover:underline">Ver todos</a>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {featured.map((p) => (
+          {loading && <div className="text-gray-600">Carregando...</div>}
+          {error && <div className="text-red-600">{error}</div>}
+          {!loading && !error && featured.map((p) => (
             <ListingCard key={p.id} p={p} />
           ))}
+          {!loading && !error && featured.length === 0 && (
+            <div className="text-gray-600">Nenhum destaque disponível no momento.</div>
+          )}
         </div>
       </section>
     </>
