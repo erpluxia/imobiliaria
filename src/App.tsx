@@ -7,6 +7,8 @@ import CreateListing from './pages/CreateListing'
 import SignUp from './pages/SignUp'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
+import MyListings from './pages/MyListings'
+import EditListing from './pages/EditListing'
 import { useAuth } from './auth/AuthContext'
 import { RequireAuth } from './auth/RequireAuth'
 
@@ -33,6 +35,7 @@ function App() {
             {user && (
               <>
                 <Link to="/perfil" className="inline-flex border border-gray-300 text-gray-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-50 text-xs sm:text-sm">Meu Perfil</Link>
+                <Link to="/meus-imoveis" className="inline-flex border border-gray-300 text-gray-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-50 text-xs sm:text-sm">Meus Imóveis</Link>
                 <Link to="/anunciar" className="inline-flex bg-indigo-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-indigo-700 text-xs sm:text-sm">Anunciar imóvel</Link>
                 <button
                   title="Sair"
@@ -83,6 +86,7 @@ function App() {
                   </button>
                   {mobileMenuOpen && (
                     <div className="absolute right-0 mt-2 w-44 rounded-md border bg-white shadow-md py-1 z-20">
+                      <Link to="/meus-imoveis" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Meus Imóveis</Link>
                       <Link to="/perfil" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Meu Perfil</Link>
                       <button
                         className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -106,6 +110,8 @@ function App() {
           <Route path="/imovel/:slug" element={<PropertyDetails />} />
           <Route path="/imovel/id/:id" element={<PropertyDetails />} />
           <Route path="/anunciar" element={<RequireAuth><CreateListing /></RequireAuth>} />
+          <Route path="/meus-imoveis" element={<RequireAuth><MyListings /></RequireAuth>} />
+          <Route path="/meus-imoveis/:id/editar" element={<RequireAuth><EditListing /></RequireAuth>} />
           <Route path="/perfil" element={<RequireAuth><Profile /></RequireAuth>} />
           <Route path="/cadastro" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
