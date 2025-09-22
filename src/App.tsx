@@ -20,8 +20,9 @@ function App() {
     <div className="min-h-dvh flex flex-col">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="text-2xl font-extrabold tracking-tight">
-            <span className="text-indigo-600">Adja</span><span className="text-gray-900">Imobi</span>
+          <Link to="/" className="flex items-center">
+            <img src="/logo.svg" alt="AdjaImobi" className="w-auto" style={{ height: '3rem' }} />
+            <span className="sr-only">AdjaImobi</span>
           </Link>
           <nav className="hidden sm:flex items-center gap-6 text-sm">
             <NavLink to="/" className={({isActive}) => `hover:text-indigo-600 ${isActive ? 'text-indigo-600 font-semibold' : ''}`}>Home</NavLink>
