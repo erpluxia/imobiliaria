@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { supabase } from '../lib/supabaseClient'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -13,6 +14,26 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const { signInWithPassword } = useAuth()
+  const [allowSignups, setAllowSignups] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    let active = true
+    async function loadSettings() {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('allow_signups')
+          .eq('id', 1)
+          .single()
+        if (error) throw error
+        if (active) setAllowSignups(Boolean(data?.allow_signups))
+      } catch (_) {
+        if (active) setAllowSignups(false)
+      }
+    }
+    loadSettings()
+    return () => { active = false }
+  }, [])
 
   function validate() {
     const next: typeof errors = {}
@@ -95,10 +116,12 @@ export default function Login() {
           <button className="text-sky-700 hover:underline" type="button" onClick={() => alert('Em breve: fluxo de recuperação de senha')}>Esqueci minha senha</button>
         </div>
 
-        <p className="text-center text-sm text-gray-600 mt-4">
-          Não possui uma conta?{' '}
-          <Link to="/cadastro" className="text-sky-700 hover:underline">Cadastre-se aqui</Link>
-        </p>
+        {allowSignups && (
+          <p className="text-center text-sm text-gray-600 mt-4">
+            Não possui uma conta?{' '}
+            <Link to="/cadastro" className="text-sky-700 hover:underline">Cadastre-se aqui</Link>
+          </p>
+        )}
       </div>
     </div>
   )

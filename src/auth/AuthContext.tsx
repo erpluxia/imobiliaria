@@ -10,6 +10,10 @@ interface AuthContextValue {
   signInWithPassword: (params: { email: string; password: string }) => Promise<{ error?: string }>
   signUp: (params: { email: string; password: string; fullName?: string; phone?: string }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
+  // extras
+  profile: { role?: 'admin' | 'user'; status?: 'active' | 'blocked'; full_name?: string | null; phone?: string | null } | null
+  isAdmin: boolean
+  isBlocked: boolean
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -18,15 +22,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState<{ role?: 'admin' | 'user'; status?: 'active' | 'blocked'; full_name?: string | null; phone?: string | null } | null>(null)
 
   useEffect(() => {
     let mounted = true
 
     // Carrega sessão atual
-    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
+    supabase.auth.getSession().then(async ({ data }: { data: { session: Session | null } }) => {
       if (!mounted) return
       setSession(data.session)
       setUser(data.session?.user ?? null)
+      // carregar profile se logado
+      if (data.session?.user?.id) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('role, status, full_name, phone')
+          .eq('id', data.session.user.id)
+          .maybeSingle()
+        if (mounted) setProfile(prof ?? null)
+      } else {
+        setProfile(null)
+      }
       setLoading(false)
     })
 
@@ -37,6 +53,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ) => {
       setSession(sess)
       setUser(sess?.user ?? null)
+      // quando sessão muda, recarrega profile
+      if (!sess?.user?.id) {
+        setProfile(null)
+      } else {
+        supabase
+          .from('profiles')
+          .select('role, status, full_name, phone')
+          .eq('id', sess.user.id)
+          .maybeSingle()
+          .then(({ data }) => setProfile(data ?? null))
+      }
     })
 
     return () => {
@@ -52,6 +79,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signUp(params: { email: string; password: string; fullName?: string; phone?: string }) {
+    // Verifica feature flag de cadastro
+    try {
+      const { data: settings, error: setErr } = await supabase
+        .from('app_settings')
+        .select('allow_signups')
+        .eq('id', 1)
+        .single()
+      if (setErr) {
+        // se tabela/flag não existir, por segurança bloqueia
+        return { error: 'Cadastros temporariamente desativados.' }
+      }
+      if (!settings?.allow_signups) {
+        return { error: 'Cadastros desativados. Solicite acesso ao administrador.' }
+      }
+    } catch (_) {
+      return { error: 'Cadastros temporariamente desativados.' }
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email: params.email,
       password: params.password,
@@ -83,7 +128,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
-  const value = useMemo<AuthContextValue>(() => ({ user, session, loading, signInWithPassword, signUp, signOut }), [user, session, loading])
+  const isAdmin = (profile?.role ?? 'user') === 'admin'
+  const isBlocked = (profile?.status ?? 'active') === 'blocked'
+
+  const value = useMemo<AuthContextValue>(() => ({
+    user,
+    session,
+    loading,
+    signInWithPassword,
+    signUp,
+    signOut,
+    profile,
+    isAdmin,
+    isBlocked,
+  }), [user, session, loading, profile, isAdmin, isBlocked])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../auth/AuthContext'
 
 export default function EditListing() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { isAdmin } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -55,7 +57,7 @@ export default function EditListing() {
           .single()
         if (error) throw error
         if (!data) throw new Error('Imóvel não encontrado')
-        if (data.owner_id !== user.id) throw new Error('Você não tem permissão para editar este imóvel.')
+        if (data.owner_id !== user.id && !isAdmin) throw new Error('Você não tem permissão para editar este imóvel.')
 
         if (!active) return
         setTitle(data.title ?? '')
@@ -114,7 +116,7 @@ export default function EditListing() {
         })
         .eq('id', id)
       if (error) throw error
-      navigate('/meus-imoveis')
+      navigate(isAdmin ? '/admin/listings?updated=1' : '/meus-imoveis')
     } catch (e: any) {
       setError(e.message ?? 'Erro ao salvar alterações')
     } finally {
@@ -327,7 +329,13 @@ export default function EditListing() {
 
           <div className="flex items-center gap-3">
             <button type="submit" disabled={saving} className={`bg-indigo-600 text-white rounded-md px-4 py-2 hover:bg-indigo-700 ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}>{saving ? 'Salvando...' : 'Salvar alterações'}</button>
-            <button type="button" onClick={() => navigate('/meus-imoveis')} className="border rounded-md px-4 py-2 hover:bg-gray-50">Cancelar</button>
+            <button
+              type="button"
+              onClick={() => navigate(isAdmin ? '/admin/listings' : '/meus-imoveis')}
+              className="border rounded-md px-4 py-2 hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
           </div>
         </form>
       )}

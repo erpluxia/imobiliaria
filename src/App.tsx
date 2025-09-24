@@ -1,5 +1,5 @@
-import { Routes, Route, Link, NavLink, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { Routes, Route, Link, NavLink, useNavigate, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import Home from './pages/Home'
 import Results from './pages/Results'
 import PropertyDetails from './pages/PropertyDetails'
@@ -11,11 +11,37 @@ import MyListings from './pages/MyListings'
 import EditListing from './pages/EditListing'
 import { useAuth } from './auth/AuthContext'
 import { RequireAuth } from './auth/RequireAuth'
+import { RequireAdmin } from './auth/RequireAdmin'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminListings from './pages/admin/AdminListings'
+import AdminUsers from './pages/admin/AdminUsers'
+import CreateUser from './pages/admin/CreateUser'
+import { supabase } from './lib/supabaseClient'
 
 function App() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, isAdmin } = useAuth()
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [allowSignups, setAllowSignups] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    let active = true
+    async function loadSettings() {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('allow_signups')
+          .eq('id', 1)
+          .single()
+        if (error) throw error
+        if (active) setAllowSignups(Boolean(data?.allow_signups))
+      } catch (_) {
+        if (active) setAllowSignups(false)
+      }
+    }
+    loadSettings()
+    return () => { active = false }
+  }, [])
   return (
     <div className="min-h-dvh flex flex-col">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
@@ -37,6 +63,9 @@ function App() {
               <>
                 <Link to="/perfil" className="inline-flex border border-gray-300 text-gray-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-50 text-xs sm:text-sm">Meu Perfil</Link>
                 <Link to="/meus-imoveis" className="inline-flex border border-gray-300 text-gray-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-50 text-xs sm:text-sm">Meus Imóveis</Link>
+                {isAdmin && (
+                  <Link to="/admin" className="inline-flex border border-amber-600 text-amber-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-amber-50 text-xs sm:text-sm">Admin</Link>
+                )}
                 <Link to="/anunciar" className="inline-flex bg-indigo-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-indigo-700 text-xs sm:text-sm">Anunciar imóvel</Link>
                 <button
                   title="Sair"
@@ -88,6 +117,9 @@ function App() {
                   {mobileMenuOpen && (
                     <div className="absolute right-0 mt-2 w-44 rounded-md border bg-white shadow-md py-1 z-20">
                       <Link to="/meus-imoveis" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Meus Imóveis</Link>
+                      {isAdmin && (
+                        <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-amber-700 hover:bg-amber-50">Admin</Link>
+                      )}
                       <Link to="/perfil" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Meu Perfil</Link>
                       <button
                         className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -114,8 +146,13 @@ function App() {
           <Route path="/meus-imoveis" element={<RequireAuth><MyListings /></RequireAuth>} />
           <Route path="/meus-imoveis/:id/editar" element={<RequireAuth><EditListing /></RequireAuth>} />
           <Route path="/perfil" element={<RequireAuth><Profile /></RequireAuth>} />
-          <Route path="/cadastro" element={<SignUp />} />
+          <Route path="/cadastro" element={allowSignups ? <SignUp /> : <Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
+          {/* Admin */}
+          <Route path="/admin" element={<RequireAuth><RequireAdmin><AdminDashboard /></RequireAdmin></RequireAuth>} />
+          <Route path="/admin/listings" element={<RequireAuth><RequireAdmin><AdminListings /></RequireAdmin></RequireAuth>} />
+          <Route path="/admin/users" element={<RequireAuth><RequireAdmin><AdminUsers /></RequireAdmin></RequireAuth>} />
+          <Route path="/admin/users/create" element={<RequireAuth><RequireAdmin><CreateUser /></RequireAdmin></RequireAuth>} />
         </Routes>
       </main>
       <footer className="border-t py-8 text-center text-sm text-gray-500 bg-white/60">© {new Date().getFullYear()} AdjaImobi — Todos os direitos reservados.</footer>

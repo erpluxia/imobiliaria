@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../auth/AuthContext'
@@ -10,8 +10,17 @@ export default function PropertyDetails() {
   const [p, setP] = useState<any | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [current, setCurrent] = useState(0)
+  const thumbsRef = useRef<HTMLDivElement | null>(null)
   const [ownerPhone, setOwnerPhone] = useState<string | null>(null)
   const { user } = useAuth()
+  const next1 = useMemo(() => {
+    if (images.length === 0) return 0
+    return (current + 1) % images.length
+  }, [current, images.length])
+  const next2 = useMemo(() => {
+    if (images.length === 0) return 0
+    return (current + 2) % images.length
+  }, [current, images.length])
 
   useEffect(() => {
     let active = true
@@ -49,7 +58,7 @@ export default function PropertyDetails() {
           .select('url')
           .eq('property_id', property.id)
           .order('position', { ascending: true })
-          .limit(20)
+          
         if (imgErr) throw imgErr
         if (moreImgs) {
           for (const it of moreImgs) {
@@ -81,6 +90,14 @@ export default function PropertyDetails() {
     load()
     return () => { active = false }
   }, [slug, id])
+
+  // Garante que a miniatura ativa fique visível no carrossel
+  useEffect(() => {
+    const cont = thumbsRef.current
+    if (!cont) return
+    const el = cont.querySelector<HTMLButtonElement>(`[data-index="${current}"]`)
+    el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }, [current])
 
   const priceText = useMemo(() => {
     if (!p?.price) return undefined
@@ -129,26 +146,72 @@ export default function PropertyDetails() {
 
       {/* Galeria */}
       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="md:col-span-2 rounded-xl overflow-hidden">
-          <div className="relative aspect-[16/9] bg-gray-100">
-            <img src={images[current] ?? images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
+        <div className="md:col-span-2">
+          <div className="rounded-xl overflow-hidden">
+            <div className="relative aspect-[16/9] bg-gray-100">
+              <img src={images[current] ?? images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
+            </div>
           </div>
-          {/* Thumbs */}
-          <div className="mt-3 grid grid-cols-4 gap-2">
-            {images.slice(0, 8).map((src, idx) => (
-              <button key={src+idx} onClick={() => setCurrent(idx)} className={`relative aspect-[4/3] rounded-lg overflow-hidden border ${current === idx ? 'ring-2 ring-indigo-600' : ''}`}>
-                <img src={src} alt={p.title + ' thumb'} className="absolute inset-0 w-full h-full object-cover" />
-              </button>
-            ))}
+          {/* Thumbs em carrossel deslizante */}
+          <div className="mt-3">
+            <div className="relative">
+              <div ref={thumbsRef} className="flex gap-2 overflow-x-auto px-2 no-scrollbar scroll-smooth snap-x">
+                {images.map((src, idx) => (
+                  <button
+                    key={src+idx}
+                    data-index={idx}
+                    onClick={() => setCurrent(idx)}
+                    className={`relative rounded-lg overflow-hidden border min-w-[96px] w-28 aspect-[4/3] snap-center ${current === idx ? 'ring-2 ring-indigo-600' : ''}`}
+                    title={`Imagem ${idx + 1}`}
+                  >
+                    <img src={src} alt={p.title + ' thumb'} className="absolute inset-0 w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+              {images.length > 8 && (
+                <div className="mt-3 flex items-center justify-between">
+                  <button
+                    onClick={() => {
+                      const cont = thumbsRef.current
+                      if (!cont) return
+                      cont.scrollBy({ left: -cont.clientWidth * 0.9, behavior: 'smooth' })
+                    }}
+                    className="px-3 py-1.5 text-sm rounded-md border bg-white hover:bg-gray-50"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    onClick={() => {
+                      const cont = thumbsRef.current
+                      if (!cont) return
+                      cont.scrollBy({ left: cont.clientWidth * 0.9, behavior: 'smooth' })
+                    }}
+                    className="px-3 py-1.5 text-sm rounded-md border bg-white hover:bg-gray-50"
+                  >
+                    Próxima
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        <div className="grid grid-rows-2 gap-3">
-          <div className="rounded-xl overflow-hidden aspect-video bg-gray-100 relative">
-            <img src={images[1] ?? images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
-          </div>
-          <div className="rounded-xl overflow-hidden aspect-video bg-gray-100 relative">
-            <img src={images[2] ?? images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
-          </div>
+        <div className="hidden lg:grid grid-rows-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setCurrent(next1)}
+            className="rounded-xl overflow-hidden aspect-video bg-gray-100 relative"
+            title="Próxima imagem"
+          >
+            <img src={images[next1] ?? images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrent(next2)}
+            className="rounded-xl overflow-hidden aspect-video bg-gray-100 relative"
+            title="Imagem seguinte"
+          >
+            <img src={images[next2] ?? images[0]} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
+          </button>
         </div>
       </div>
       <div className="mt-2">
