@@ -8,6 +8,7 @@ type Preview = { name: string; dataUrl: string; file?: File }
 export default function CreateListing() {
   const navigate = useNavigate()
   const [previews, setPreviews] = useState<Preview[]>([])
+  const [coverIndex, setCoverIndex] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -38,17 +39,36 @@ export default function CreateListing() {
   const onDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     const items = await readFilesAsDataUrl(e.dataTransfer.files)
-    setPreviews((prev) => [...prev, ...items])
+    setPreviews((prev) => {
+      const next = [...prev, ...items]
+      return next
+    })
+    setCoverIndex((ci) => (ci == null && items.length > 0 ? 0 : ci))
   }, [readFilesAsDataUrl])
 
   const onFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const items = await readFilesAsDataUrl(e.target.files)
-    setPreviews((prev) => [...prev, ...items])
+    setPreviews((prev) => {
+      const next = [...prev, ...items]
+      return next
+    })
+    setCoverIndex((ci) => (ci == null && items.length > 0 ? 0 : ci))
     if (inputRef.current) inputRef.current.value = ''
   }, [readFilesAsDataUrl])
 
   function removePreview(name: string) {
-    setPreviews((prev) => prev.filter((p) => p.name !== name))
+    setPreviews((prev) => {
+      const idx = prev.findIndex((p) => p.name === name)
+      const next = prev.filter((p) => p.name !== name)
+      setCoverIndex((ci) => {
+        if (ci == null) return ci
+        if (idx === -1) return ci
+        if (ci === idx) return next.length ? 0 : null
+        if (ci > idx) return ci - 1
+        return ci
+      })
+      return next
+    })
   }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -121,7 +141,8 @@ export default function CreateListing() {
 
       // 5) Definir capa
       if (uploadedUrls.length > 0) {
-        const cover = uploadedUrls[0]
+        const idx = (coverIndex != null && coverIndex >= 0 && coverIndex < uploadedUrls.length) ? coverIndex : 0
+        const cover = uploadedUrls[idx]
         const upCov = await supabase.from('properties').update({ cover_image_url: cover }).eq('id', propertyId)
         if (upCov.error) throw upCov.error
       }
@@ -244,10 +265,20 @@ export default function CreateListing() {
               <div className="px-6 pb-6">
                 <div className="text-sm font-medium mb-2">Pré-visualização</div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {previews.map((p) => (
+                  {previews.map((p, idx) => (
                     <div key={p.name} className="relative rounded-lg overflow-hidden border bg-gray-50 aspect-[4/3]">
                       <img src={p.dataUrl} alt={p.name} className="absolute inset-0 w-full h-full object-cover" />
-                      <button type="button" onClick={() => removePreview(p.name)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full px-2 py-0.5 text-xs">remover</button>
+                      {coverIndex === idx && (
+                        <span className="absolute top-2 left-2 bg-green-600 text-white text-[10px] px-2 py-0.5 rounded-full">Capa</span>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between gap-2 bg-gradient-to-t from-black/50 to-transparent">
+                        {coverIndex === idx ? (
+                          <span className="text-white/90 text-xs px-2 py-1 rounded-md border border-white/30">Imagem de capa</span>
+                        ) : (
+                          <button type="button" onClick={() => setCoverIndex(idx)} className="text-white/90 hover:text-white text-xs px-2 py-1 rounded-md border border-white/30">Definir capa</button>
+                        )}
+                        <button type="button" onClick={() => removePreview(p.name)} className="text-white/90 hover:text-white text-xs px-2 py-1 rounded-md border border-white/30">Remover</button>
+                      </div>
                     </div>
                   ))}
                 </div>

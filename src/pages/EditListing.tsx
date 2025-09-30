@@ -24,6 +24,7 @@ export default function EditListing() {
   const [bedrooms, setBedrooms] = useState<number | ''>('')
   const [bathrooms, setBathrooms] = useState<number | ''>('')
   const [parking, setParking] = useState<number | ''>('')
+  const [coverUrl, setCoverUrl] = useState<string | null>(null)
 
   // Preço com máscara BRL
   const [priceDigits, setPriceDigits] = useState<string>('') // em centavos
@@ -72,6 +73,7 @@ export default function EditListing() {
         setBathrooms(typeof data.bathrooms === 'number' ? data.bathrooms : '')
         setParking(typeof data.parking_spaces === 'number' ? data.parking_spaces : '')
         if (typeof data.price === 'number') setPriceDigits(String(Math.round(data.price * 100)))
+        setCoverUrl(data.cover_image_url ?? null)
 
         // Carregar imagens
         const { data: imgs, error: imgErr } = await supabase
@@ -170,9 +172,32 @@ export default function EditListing() {
       }
       const del = await supabase.from('property_images').delete().eq('id', img.id)
       if (del.error) throw del.error
-      setImages((prev) => prev.filter((it) => it.id !== img.id))
+      setImages((prev) => {
+        const next = prev.filter((it) => it.id !== img.id)
+        // Se a imagem removida era a capa, escolher uma nova capa (primeira da lista) ou limpar
+        if (coverUrl && next.every((it) => it.url !== coverUrl)) {
+          const newCover = next[0]?.url || null
+          setCoverUrl(newCover ?? null)
+          if (id) {
+            supabase.from('properties').update({ cover_image_url: newCover }).eq('id', id)
+          }
+        }
+        return next
+      })
     } catch (err: any) {
       alert(err.message ?? 'Erro ao remover imagem')
+    }
+  }
+
+  // Definir capa
+  async function setAsCover(url: string) {
+    if (!id) return
+    try {
+      const up = await supabase.from('properties').update({ cover_image_url: url }).eq('id', id)
+      if (up.error) throw up.error
+      setCoverUrl(url)
+    } catch (err: any) {
+      alert(err.message ?? 'Erro ao definir capa')
     }
   }
 
@@ -314,12 +339,22 @@ export default function EditListing() {
                 {images.map((img, idx) => (
                   <div key={img.id} className="relative rounded-lg overflow-hidden border bg-gray-50 aspect-[4/3]">
                     <img src={img.url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    {coverUrl === img.url && (
+                      <span className="absolute top-2 left-2 bg-green-600 text-white text-[10px] px-2 py-0.5 rounded-full">Capa</span>
+                    )}
                     <div className="absolute inset-x-0 bottom-0 p-2 flex items-center justify-between gap-2 bg-gradient-to-t from-black/50 to-transparent">
                       <div className="flex items-center gap-1">
                         <button type="button" onClick={() => moveImage(idx, -1)} className="text-white/90 hover:text-white text-xs px-2 py-1 rounded-md border border-white/30">◀</button>
                         <button type="button" onClick={() => moveImage(idx, +1)} className="text-white/90 hover:text-white text-xs px-2 py-1 rounded-md border border-white/30">▶</button>
                       </div>
-                      <button type="button" onClick={() => removeImage(img)} className="text-white/90 hover:text-white text-xs px-2 py-1 rounded-md border border-white/30">Remover</button>
+                      <div className="flex items-center gap-2">
+                        {coverUrl === img.url ? (
+                          <span className="text-white/90 text-xs px-2 py-1 rounded-md border border-white/30">Imagem de capa</span>
+                        ) : (
+                          <button type="button" onClick={() => setAsCover(img.url)} className="text-white/90 hover:text-white text-xs px-2 py-1 rounded-md border border-white/30">Definir capa</button>
+                        )}
+                        <button type="button" onClick={() => removeImage(img)} className="text-white/90 hover:text-white text-xs px-2 py-1 rounded-md border border-white/30">Remover</button>
+                      </div>
                     </div>
                   </div>
                 ))}
