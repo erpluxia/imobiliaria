@@ -13,13 +13,21 @@ export default function CreateListing() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successSlug, setSuccessSlug] = useState<string | null>(null)
-  const [priceDigits, setPriceDigits] = useState<string>('') // somente dígitos em centavos
+  const [priceSaleDigits, setPriceSaleDigits] = useState<string>('') // dígitos em centavos para venda
+  const [priceRentDigits, setPriceRentDigits] = useState<string>('') // dígitos em centavos para aluguel
+  const [isForSale, setIsForSale] = useState<boolean>(false)
+  const [isForRent, setIsForRent] = useState<boolean>(false)
 
   const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
-  const priceDisplay = priceDigits ? brl.format(Number(priceDigits) / 100) : ''
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const priceSaleDisplay = priceSaleDigits ? brl.format(Number(priceSaleDigits) / 100) : ''
+  const priceRentDisplay = priceRentDigits ? brl.format(Number(priceRentDigits) / 100) : ''
+  const handlePriceSaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D+/g, '')
-    setPriceDigits(digits)
+    setPriceSaleDigits(digits)
+  }
+  const handlePriceRentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D+/g, '')
+    setPriceRentDigits(digits)
   }
 
   const readFilesAsDataUrl = useCallback(async (files: FileList | null) => {
@@ -79,7 +87,8 @@ export default function CreateListing() {
 
     const fd = new FormData(e.currentTarget)
 
-    const price = priceDigits ? Number(priceDigits) / 100 : 0
+    const priceSale = priceSaleDigits ? Number(priceSaleDigits) / 100 : null
+    const priceRent = priceRentDigits ? Number(priceRentDigits) / 100 : null
     const bedrooms = Number(fd.get('bedrooms') || 0)
     const bathrooms = Number(fd.get('bathrooms') || 0)
     const parking = Number(fd.get('parking') || 0)
@@ -101,13 +110,20 @@ export default function CreateListing() {
           city: String(fd.get('city') || ''),
           neighborhood: String(fd.get('neighborhood') || ''),
           address: String(fd.get('address') || ''),
-          price: isNaN(price) ? null : price,
+          // legado: manter price nulo para evitar conflitos quando houver múltiplas modalidades
+          price: null,
           bedrooms: isNaN(bedrooms) ? null : bedrooms,
           bathrooms: isNaN(bathrooms) ? null : bathrooms,
           parking_spaces: isNaN(parking) ? null : parking,
           area_m2: isNaN(area) ? null : area,
           type: String(fd.get('type') || ''),
-          business: String(fd.get('business') || 'sale'),
+          // novos campos de modalidade
+          is_for_sale: isForSale,
+          is_for_rent: isForRent,
+          price_sale: priceSale,
+          price_rent: priceRent,
+          // opcional: manter business nulo para registros multi-modalidade
+          business: (isForSale && !isForRent) ? 'sale' : (isForRent && !isForSale) ? 'rent' : null,
           is_active: true,
         })
         .select('id, slug')
@@ -191,11 +207,15 @@ export default function CreateListing() {
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-gray-700">Negócio</label>
-            <select name="business" className="mt-2 w-full h-11 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-              <option value="sale">Venda</option>
-              <option value="rent">Aluguel</option>
-            </select>
+            <label className="text-sm font-semibold text-gray-700">Modalidade</label>
+            <div className="mt-2 flex items-center gap-4">
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" name="is_for_sale" checked={isForSale} onChange={(e) => setIsForSale(e.target.checked)} className="accent-indigo-600" /> Venda
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" name="is_for_rent" checked={isForRent} onChange={(e) => setIsForRent(e.target.checked)} className="accent-indigo-600" /> Aluguel
+              </label>
+            </div>
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700">Tipo</label>
@@ -206,16 +226,29 @@ export default function CreateListing() {
             </select>
           </div>
 
-          <div>
-            <label className="text-sm font-semibold text-gray-700">Preço (R$)</label>
-            <input
-              name="price"
-              value={priceDisplay}
-              onChange={handlePriceChange}
-              inputMode="numeric"
-              className="mt-2 w-full h-11 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="R$ 320.000,00"
-            />
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Preço de venda (R$)</label>
+              <input
+                name="price_sale"
+                value={priceSaleDisplay}
+                onChange={handlePriceSaleChange}
+                inputMode="numeric"
+                className="mt-2 w-full h-11 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="R$ 320.000,00"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Preço de aluguel (R$/mês)</label>
+              <input
+                name="price_rent"
+                value={priceRentDisplay}
+                onChange={handlePriceRentChange}
+                inputMode="numeric"
+                className="mt-2 w-full h-11 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="R$ 3.200,00"
+              />
+            </div>
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700">Área (m²)</label>

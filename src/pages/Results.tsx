@@ -27,12 +27,37 @@ export default function Results() {
       try {
         let q = supabase.from('properties').select('*').eq('is_active', true).order('created_at', { ascending: false })
         if (query.city) q = q.ilike('city', `%${query.city}%`)
-        if (query.business) q = q.eq('business', query.business)
         if (typeof query.bedrooms === 'number') q = q.gte('bedrooms', query.bedrooms)
-        if (typeof query.minPrice === 'number') q = q.gte('price', query.minPrice)
-        if (typeof query.maxPrice === 'number') q = q.lte('price', query.maxPrice)
         // Texto livre básico em title/description
         if (query.q) q = q.or(`title.ilike.%${query.q}%,description.ilike.%${query.q}%`)
+
+        // Modalidades e preços
+        const hasMin = typeof query.minPrice === 'number'
+        const hasMax = typeof query.maxPrice === 'number'
+        if (query.business === 'sale') {
+          q = q.eq('is_for_sale', true)
+          if (hasMin) q = q.gte('price_sale', query.minPrice as number)
+          if (hasMax) q = q.lte('price_sale', query.maxPrice as number)
+        } else if (query.business === 'rent') {
+          q = q.eq('is_for_rent', true)
+          if (hasMin) q = q.gte('price_rent', query.minPrice as number)
+          if (hasMax) q = q.lte('price_rent', query.maxPrice as number)
+        } else {
+          // Sem filtro de business: considerar ambos via OR
+          const parts: string[] = []
+          // Construir subcondições com AND
+          const saleConds: string[] = ['is_for_sale.eq.true']
+          if (hasMin) saleConds.push(`price_sale.gte.${query.minPrice}`)
+          if (hasMax) saleConds.push(`price_sale.lte.${query.maxPrice}`)
+          parts.push(`and(${saleConds.join(',')})`)
+
+          const rentConds: string[] = ['is_for_rent.eq.true']
+          if (hasMin) rentConds.push(`price_rent.gte.${query.minPrice}`)
+          if (hasMax) rentConds.push(`price_rent.lte.${query.maxPrice}`)
+          parts.push(`and(${rentConds.join(',')})`)
+
+          q = q.or(parts.join(','))
+        }
 
         const { data, error } = await q.limit(50)
         if (error) throw error

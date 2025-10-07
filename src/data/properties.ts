@@ -5,13 +5,16 @@ export type Property = {
   city: string;
   neighborhood: string;
   address: string;
-  price: number;
+  // novo modelo de preços/modalidades
+  is_for_sale: boolean;
+  is_for_rent: boolean;
+  price_sale?: number; // à vista
+  price_rent?: number; // por mês
   bedrooms: number;
   bathrooms: number;
   parking: number;
   area: number; // m²
   type: 'apartment' | 'house' | 'commercial';
-  business: 'rent' | 'sale';
   latitude: number;
   longitude: number;
   images: string[];
@@ -26,13 +29,14 @@ export const PROPERTIES: Property[] = [
     city: 'São Paulo',
     neighborhood: 'Vila Mariana',
     address: 'Rua Domingos de Morais, 1234',
-    price: 850000,
+    is_for_sale: true,
+    is_for_rent: false,
+    price_sale: 850000,
     bedrooms: 2,
     bathrooms: 2,
     parking: 1,
     area: 72,
     type: 'apartment',
-    business: 'sale',
     latitude: -23.588,
     longitude: -46.634,
     images: [
@@ -52,13 +56,14 @@ export const PROPERTIES: Property[] = [
     city: 'Rio de Janeiro',
     neighborhood: 'Tijuca',
     address: 'Rua Conde de Bonfim, 500',
-    price: 4500,
+    is_for_sale: false,
+    is_for_rent: true,
+    price_rent: 4500,
     bedrooms: 3,
     bathrooms: 3,
     parking: 2,
     area: 180,
     type: 'house',
-    business: 'rent',
     latitude: -22.925,
     longitude: -43.236,
     images: [
@@ -78,13 +83,14 @@ export const PROPERTIES: Property[] = [
     city: 'São Paulo',
     neighborhood: 'Pinheiros',
     address: 'Av. Faria Lima, 2000',
-    price: 3800,
+    is_for_sale: false,
+    is_for_rent: true,
+    price_rent: 3800,
     bedrooms: 1,
     bathrooms: 1,
     parking: 1,
     area: 35,
     type: 'apartment',
-    business: 'rent',
     latitude: -23.570,
     longitude: -46.693,
     images: [
@@ -115,9 +121,30 @@ export function filterProperties(list: Property[], query: Query): Property[] {
       if (!t.includes(query.q.toLowerCase())) return false;
     }
     if (query.city && query.city !== '' && p.city !== query.city) return false;
-    if (query.business && p.business !== query.business) return false;
-    if (typeof query.minPrice === 'number' && p.price < query.minPrice) return false;
-    if (typeof query.maxPrice === 'number' && p.price > query.maxPrice) return false;
+    // Modalidades e faixa de preço
+    if (query.business === 'sale') {
+      if (!p.is_for_sale) return false;
+      if (typeof query.minPrice === 'number' && (p.price_sale ?? Infinity) < query.minPrice) return false;
+      if (typeof query.maxPrice === 'number' && (p.price_sale ?? -Infinity) > query.maxPrice) return false;
+    } else if (query.business === 'rent') {
+      if (!p.is_for_rent) return false;
+      if (typeof query.minPrice === 'number' && (p.price_rent ?? Infinity) < query.minPrice) return false;
+      if (typeof query.maxPrice === 'number' && (p.price_rent ?? -Infinity) > query.maxPrice) return false;
+    } else {
+      // Sem filtro: aceitar se bate em venda OU aluguel
+      let ok = false;
+      if (p.is_for_sale) {
+        const ps = p.price_sale ?? Infinity;
+        const okSale = (typeof query.minPrice !== 'number' || ps >= query.minPrice) && (typeof query.maxPrice !== 'number' || ps <= query.maxPrice);
+        if (okSale) ok = true;
+      }
+      if (!ok && p.is_for_rent) {
+        const pr = p.price_rent ?? Infinity;
+        const okRent = (typeof query.minPrice !== 'number' || pr >= query.minPrice) && (typeof query.maxPrice !== 'number' || pr <= query.maxPrice);
+        if (okRent) ok = true;
+      }
+      if (!ok) return false;
+    }
     if (typeof query.bedrooms === 'number' && p.bedrooms < query.bedrooms) return false;
     return true;
   });

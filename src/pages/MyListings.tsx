@@ -21,7 +21,7 @@ export default function MyListings() {
         if (!user) throw new Error('Você precisa estar logado.')
         const { data, error } = await supabase
           .from('properties')
-          .select('id, title, city, neighborhood, business, price, cover_image_url, slug, created_at')
+          .select('id, title, city, neighborhood, is_for_sale, is_for_rent, price_sale, price_rent, cover_image_url, slug, created_at')
           .eq('owner_id', user.id)
           .order('created_at', { ascending: false })
           .limit(100)
@@ -104,9 +104,16 @@ export default function MyListings() {
               <div className="p-4">
                 <Link to={`/imovel/${p.slug || p.id}`} className="font-semibold text-gray-900 hover:underline line-clamp-1">{p.title}</Link>
                 <div className="text-sm text-gray-600 line-clamp-1">{p.neighborhood}, {p.city}</div>
-                <div className="mt-2 text-[13px] text-gray-700 inline-flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full border bg-white">{p.business === 'rent' ? 'Aluguel' : 'Venda'}</span>
-                  <span className="font-semibold">{typeof p.price === 'number' ? brl.format(p.price) : '—'}</span>
+                <div className="mt-2 text-[13px] text-gray-700 inline-flex items-center gap-3 flex-wrap">
+                  {p.is_for_sale && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full border bg-white">Venda: <span className="font-semibold">{typeof p.price_sale === 'number' ? brl.format(p.price_sale) : '—'}</span></span>
+                  )}
+                  {p.is_for_rent && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full border bg-white">Aluguel: <span className="font-semibold">{typeof p.price_rent === 'number' ? `${brl.format(p.price_rent)}/mês` : '—'}</span></span>
+                  )}
+                  {!p.is_for_sale && !p.is_for_rent && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full border bg-white">—</span>
+                  )}
                 </div>
               </div>
               <div className="border-t md:border-t-0 md:border-l p-4 flex items-center md:items-end justify-between md:flex-col gap-3">

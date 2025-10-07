@@ -19,20 +19,27 @@ export default function EditListing() {
   const [city, setCity] = useState('')
   const [neighborhood, setNeighborhood] = useState('')
   const [type, setType] = useState<'apartment' | 'house' | 'commercial'>('apartment')
-  const [business, setBusiness] = useState<'sale' | 'rent'>('sale')
+  const [isForSale, setIsForSale] = useState<boolean>(false)
+  const [isForRent, setIsForRent] = useState<boolean>(false)
   const [area, setArea] = useState<number | ''>('')
   const [bedrooms, setBedrooms] = useState<number | ''>('')
   const [bathrooms, setBathrooms] = useState<number | ''>('')
   const [parking, setParking] = useState<number | ''>('')
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
 
-  // Preço com máscara BRL
-  const [priceDigits, setPriceDigits] = useState<string>('') // em centavos
+  // Preços com máscara BRL
+  const [priceSaleDigits, setPriceSaleDigits] = useState<string>('') // em centavos
+  const [priceRentDigits, setPriceRentDigits] = useState<string>('') // em centavos
   const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
-  const priceDisplay = priceDigits ? brl.format(Number(priceDigits) / 100) : ''
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const priceSaleDisplay = priceSaleDigits ? brl.format(Number(priceSaleDigits) / 100) : ''
+  const priceRentDisplay = priceRentDigits ? brl.format(Number(priceRentDigits) / 100) : ''
+  const handlePriceSaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D+/g, '')
-    setPriceDigits(digits)
+    setPriceSaleDigits(digits)
+  }
+  const handlePriceRentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D+/g, '')
+    setPriceRentDigits(digits)
   }
 
   // Imagens
@@ -67,12 +74,14 @@ export default function EditListing() {
         setCity(data.city ?? '')
         setNeighborhood(data.neighborhood ?? '')
         setType(data.type ?? 'apartment')
-        setBusiness(data.business ?? 'sale')
+        setIsForSale(!!data.is_for_sale)
+        setIsForRent(!!data.is_for_rent)
         setArea(typeof data.area_m2 === 'number' ? data.area_m2 : '')
         setBedrooms(typeof data.bedrooms === 'number' ? data.bedrooms : '')
         setBathrooms(typeof data.bathrooms === 'number' ? data.bathrooms : '')
         setParking(typeof data.parking_spaces === 'number' ? data.parking_spaces : '')
-        if (typeof data.price === 'number') setPriceDigits(String(Math.round(data.price * 100)))
+        if (typeof data.price_sale === 'number') setPriceSaleDigits(String(Math.round(data.price_sale * 100)))
+        if (typeof data.price_rent === 'number') setPriceRentDigits(String(Math.round(data.price_rent * 100)))
         setCoverUrl(data.cover_image_url ?? null)
 
         // Carregar imagens
@@ -99,7 +108,8 @@ export default function EditListing() {
     setSaving(true)
     setError(null)
     try {
-      const price = priceDigits ? Number(priceDigits) / 100 : 0
+      const priceSale = priceSaleDigits ? Number(priceSaleDigits) / 100 : null
+      const priceRent = priceRentDigits ? Number(priceRentDigits) / 100 : null
       const { error } = await supabase
         .from('properties')
         .update({
@@ -109,12 +119,17 @@ export default function EditListing() {
           city: city || null,
           neighborhood: neighborhood || null,
           type,
-          business,
+          // modalidades e preços
+          is_for_sale: isForSale,
+          is_for_rent: isForRent,
+          price_sale: priceSale,
+          price_rent: priceRent,
+          // legado: manter price nulo para múltiplas modalidades
+          price: null,
           area_m2: typeof area === 'number' ? area : null,
           bedrooms: typeof bedrooms === 'number' ? bedrooms : null,
           bathrooms: typeof bathrooms === 'number' ? bathrooms : null,
           parking_spaces: typeof parking === 'number' ? parking : null,
-          price,
         })
         .eq('id', id)
       if (error) throw error
@@ -257,11 +272,15 @@ export default function EditListing() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700">Negócio</label>
-              <select value={business} onChange={(e) => setBusiness(e.target.value as any)} className="mt-2 w-full h-11 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                <option value="sale">Venda</option>
-                <option value="rent">Aluguel</option>
-              </select>
+              <label className="text-sm font-semibold text-gray-700">Modalidade</label>
+              <div className="mt-2 flex items-center gap-4">
+                <label className="inline-flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={isForSale} onChange={(e) => setIsForSale(e.target.checked)} className="accent-indigo-600" /> Venda
+                </label>
+                <label className="inline-flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={isForRent} onChange={(e) => setIsForRent(e.target.checked)} className="accent-indigo-600" /> Aluguel
+                </label>
+              </div>
             </div>
           </div>
 
@@ -309,15 +328,27 @@ export default function EditListing() {
             </div>
           </div>
 
-          <div>
-            <label className="text-sm font-semibold text-gray-700">Preço (R$)</label>
-            <input
-              value={priceDisplay}
-              onChange={handlePriceChange}
-              inputMode="numeric"
-              className="mt-2 w-full h-11 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="R$ 320.000,00"
-            />
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Preço de venda (R$)</label>
+              <input
+                value={priceSaleDisplay}
+                onChange={handlePriceSaleChange}
+                inputMode="numeric"
+                className="mt-2 w-full h-11 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="R$ 320.000,00"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Preço de aluguel (R$/mês)</label>
+              <input
+                value={priceRentDisplay}
+                onChange={handlePriceRentChange}
+                inputMode="numeric"
+                className="mt-2 w-full h-11 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="R$ 3.200,00"
+              />
+            </div>
           </div>
 
           {/* Gerenciamento de fotos */}

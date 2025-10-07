@@ -99,9 +99,13 @@ export default function PropertyDetails() {
     el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
   }, [current])
 
-  const priceText = useMemo(() => {
-    if (!p?.price) return undefined
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price)
+  const priceSaleText = useMemo(() => {
+    if (!p?.price_sale) return undefined
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price_sale)
+  }, [p])
+  const priceRentText = useMemo(() => {
+    if (!p?.price_rent) return undefined
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price_rent)
   }, [p])
 
   if (loading) {
@@ -139,8 +143,13 @@ export default function PropertyDetails() {
           <p className="text-gray-600">{p.address} — {p.neighborhood}, {p.city}</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl md:text-3xl font-bold text-gray-900">{p.business === 'rent' ? `${priceText ?? '—'}/mês` : (priceText ?? '—')}</div>
+          <div className="text-2xl md:text-3xl font-bold text-gray-900">
+            {p.is_for_rent && priceRentText ? `${priceRentText}/mês` : p.is_for_sale && priceSaleText ? priceSaleText : '—'}
+          </div>
           <div className="text-xs text-gray-500">{p.type === 'apartment' ? 'Apartamento' : p.type === 'house' ? 'Casa' : 'Comercial'} • {p.area_m2 ?? '—'} m²</div>
+          {p.is_for_rent && p.is_for_sale && (
+            <div className="mt-1 text-xs text-gray-600">Venda: {priceSaleText ?? '—'} • Aluguel: {priceRentText ? `${priceRentText}/mês` : '—'}</div>
+          )}
         </div>
       </div>
 
@@ -229,7 +238,17 @@ export default function PropertyDetails() {
             <div className="grid sm:grid-cols-3 gap-4 text-sm">
               <div className="rounded-xl border p-4">
                 <div className="text-gray-500">Imóvel</div>
-                <div className="text-xl font-bold">{p.business === 'rent' ? `${priceText ?? '—'}/mês` : (priceText ?? '—')}</div>
+                <div className="text-sm mt-1 space-y-1">
+                  {p.is_for_sale && (
+                    <div><span className="font-medium">Venda:</span> <span className="text-base font-bold">{priceSaleText ?? '—'}</span></div>
+                  )}
+                  {p.is_for_rent && (
+                    <div><span className="font-medium">Aluguel:</span> <span className="text-base font-bold">{priceRentText ? `${priceRentText}/mês` : '—'}</span></div>
+                  )}
+                  {!p.is_for_sale && !p.is_for_rent && (
+                    <div className="text-base font-bold">—</div>
+                  )}
+                </div>
               </div>
               <div className="rounded-xl border p-4">
                 <div className="text-gray-500">Condomínio</div>

@@ -6,10 +6,12 @@ export default function ListingCard({ p }: { p: any }) {
   const image = p.cover_image_url || p.images?.[0] || 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&auto=format&fit=crop&q=80'
   const area = p.area_m2 ?? p.area ?? '—'
   const parking = p.parking_spaces ?? p.parking ?? 0
-  const priceText = typeof p.price === 'number' ? brl.format(p.price) : '—'
+  const priceSaleText = typeof p.price_sale === 'number' ? brl.format(p.price_sale) : '—'
+  const priceRentText = typeof p.price_rent === 'number' ? brl.format(p.price_rent) : '—'
   const link = `/imovel/${p.slug || p.id}`
   const tipo = p.type === 'apartment' ? 'Apartamento' : p.type === 'house' ? 'Casa' : 'Comercial'
-  const resumo = `${tipo} para ${p.business === 'rent' ? 'alugar' : 'comprar'} com ${area} m² · ${p.bedrooms ?? 0} quartos · ${p.bathrooms ?? 0} banheiros · ${parking} vagas em ${p.neighborhood}, ${p.city}`
+  const verb = p.is_for_rent && p.is_for_sale ? 'vender e alugar' : p.is_for_rent ? 'alugar' : 'comprar'
+  const resumo = `${tipo} para ${verb} com ${area} m² · ${p.bedrooms ?? 0} quartos · ${p.bathrooms ?? 0} banheiros · ${parking} vagas em ${p.neighborhood}, ${p.city}`
 
   return (
     <article className="group bg-white rounded-2xl shadow overflow-hidden hover:shadow-md transition-shadow">
@@ -20,9 +22,12 @@ export default function ListingCard({ p }: { p: any }) {
           <span className="text-[11px] px-2 py-1 rounded-full bg-black/70 text-white capitalize">
             {tipo}
           </span>
-          <span className="text-[11px] px-2 py-1 rounded-full bg-indigo-600 text-white capitalize">
-            {p.business === 'rent' ? 'Aluguel' : 'Venda'}
-          </span>
+          {p.is_for_sale && (
+            <span className="text-[11px] px-2 py-1 rounded-full bg-emerald-600 text-white capitalize">Venda</span>
+          )}
+          {p.is_for_rent && (
+            <span className="text-[11px] px-2 py-1 rounded-full bg-indigo-600 text-white capitalize">Aluguel</span>
+          )}
         </div>
         {/* Faixa descritiva na base da imagem */}
         <div className="absolute inset-x-0 bottom-0 p-2">
@@ -51,8 +56,10 @@ export default function ListingCard({ p }: { p: any }) {
           <span className="inline-flex items-center gap-1">🚗 {parking}</span>
         </div>
 
-        <div className="mt-3 font-bold text-gray-900">
-          {p.business === 'rent' ? `${priceText}/mês` : priceText}
+        <div className="mt-3 font-bold text-gray-900 text-sm space-y-1">
+          {p.is_for_sale && <div>Venda: <span className="text-base">{priceSaleText}</span></div>}
+          {p.is_for_rent && <div>Aluguel: <span className="text-base">{priceRentText !== '—' ? `${priceRentText}/mês` : '—'}</span></div>}
+          {!p.is_for_sale && !p.is_for_rent && <div className="text-base">—</div>}
         </div>
 
         <div className="mt-3 flex items-center gap-3">

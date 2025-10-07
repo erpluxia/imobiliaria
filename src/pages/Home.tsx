@@ -38,20 +38,36 @@ export default function Home() {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-indigo-50 via-white to-sky-50" />
-        <div className="max-w-7xl mx-auto px-4 py-16 md:py-20">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">Seu imóvel ideal está aqui</h1>
-            <p className="text-lg text-gray-600 mt-3">Explore imóveis para comprar ou alugar nas melhores regiões do Brasil.</p>
+        {/* Banner full-width com textos sobrepostos */}
+        <div className="relative">
+          <img
+            src="/banner.png"
+            alt="Banner imobiliária"
+            className="w-full h-[240px] md:h-[360px] xl:h-[460px] object-cover"
+            loading="eager"
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0">
+            {/* overlay sutil para reforçar contraste do texto */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/25 to-black/35" />
+            <div className="relative max-w-7xl mx-auto h-full px-4 flex items-center justify-center">
+              <div className="max-w-3xl text-center">
+                <h1 className="text-4xl md:text-6xl font-extrabold leading-tight tracking-tight text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">Seu imóvel ideal está aqui</h1>
+                <p className="text-lg md:text-2xl font-medium text-white/95 mt-4 drop-shadow-[0_3px_10px_rgba(0,0,0,0.6)]">Explore imóveis para comprar ou alugar nas melhores regiões do Brasil.</p>
+              </div>
+            </div>
           </div>
-          <div className="mt-8 bg-white p-4 md:p-6 rounded-2xl shadow-lg border">
+        </div>
+
+        {/* Filtros abaixo do banner, dentro do container */}
+        <div className="max-w-7xl mx-auto px-4 mt-6 md:mt-8">
+          <div className="bg-white p-4 md:p-6 rounded-2xl shadow-lg">
             <SearchBar />
           </div>
-          {/* Removido: chips de cidades abaixo dos filtros */}
         </div>
       </section>
 
-      {/* Destaques */}
+      {/*Destaques */}
       <section className="max-w-7xl mx-auto px-4 pb-14">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Destaques</h2>

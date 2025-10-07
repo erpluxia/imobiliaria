@@ -47,7 +47,7 @@ function App() {
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img src="/logo.svg" alt="AdjaImobi" className="w-auto" style={{ height: '3rem' }} />
+            <img src="/logonovo.png" alt="AdjaImobi" className="w-auto transform origin-left scale-[1.15] md:scale-[1.25]" style={{ height: '3rem' }} />
             <span className="sr-only">AdjaImobi</span>
           </Link>
           <nav className="hidden sm:flex items-center gap-6 text-sm">
