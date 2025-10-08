@@ -321,7 +321,7 @@ export default function CreateListing() {
 
           <div className="md:col-span-2 flex items-center justify-end gap-4 pt-4 md:pt-6">
             <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 rounded-md border">Cancelar</button>
-            <button type="submit" disabled={submitting} className={`bg-indigo-600 text-white rounded-md px-4 py-2 hover:bg-indigo-700 ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}>{submitting ? 'Publicando...' : 'Publicar anúncio'}</button>
+            <button type="submit" disabled={submitting} className={`bg-black text-white rounded-md px-4 py-2 hover:bg-gray-900 ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}>{submitting ? 'Publicando...' : 'Publicar anúncio'}</button>
           </div>
         </form>
       </div>

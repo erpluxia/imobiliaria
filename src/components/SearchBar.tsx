@@ -40,7 +40,7 @@ export default function SearchBar() {
         <option value="rent">Aluguel</option>
         <option value="sale">Venda</option>
       </select>
-      <button type="submit" className="bg-indigo-600 text-white rounded-md px-4 py-2 hover:bg-indigo-700">
+      <button type="submit" className="bg-black text-white rounded-md px-4 py-2 hover:bg-gray-900">
         Buscar
       </button>
     </form>

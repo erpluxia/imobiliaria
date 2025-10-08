@@ -76,10 +76,9 @@ export default function CreateUser() {
           </div>
         </div>
         <div>
-          <button type="submit" disabled={loading} className={`bg-indigo-600 text-white rounded-md px-4 py-2 hover:bg-indigo-700 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}>{loading ? 'Criando...' : 'Criar usuário'}</button>
+          <button type="submit" disabled={loading} className={`bg-black text-white rounded-md px-4 py-2 hover:bg-gray-900 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}>{loading ? 'Criando...' : 'Criar usuário'}</button>
         </div>
       </form>
-      <p className="mt-3 text-xs text-gray-500">Esta ação chama a Edge Function <code>admin-create-user</code>. Certifique-se de tê-la implantado no Supabase e configurado as variáveis de ambiente.</p>
     </section>
   )
 }

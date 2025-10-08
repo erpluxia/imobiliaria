@@ -17,6 +17,7 @@ import AdminListings from './pages/admin/AdminListings'
 import AdminUsers from './pages/admin/AdminUsers'
 import CreateUser from './pages/admin/CreateUser'
 import { supabase } from './lib/supabaseClient'
+import FloatingWhatsAppButton from './components/FloatingWhatsAppButton'
 
 function App() {
   const { user, signOut, isAdmin } = useAuth()
@@ -44,33 +45,42 @@ function App() {
   }, [])
   return (
     <div className="min-h-dvh flex flex-col">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
+      <header className="sticky top-0 z-10 bg-black border-b border-black">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center">
             <img src="/logonovo.png" alt="AdjaImobi" className="w-auto transform origin-left scale-[1.15] md:scale-[1.25]" style={{ height: '3rem' }} />
             <span className="sr-only">AdjaImobi</span>
           </Link>
-          <nav className="hidden sm:flex items-center gap-6 text-sm">
-            <NavLink to="/" className={({isActive}) => `hover:text-indigo-600 ${isActive ? 'text-indigo-600 font-semibold' : ''}`}>Home</NavLink>
-            <NavLink to="/resultados" className={({isActive}) => `hover:text-indigo-600 ${isActive ? 'text-indigo-600 font-semibold' : ''}`}>Resultados</NavLink>
+          <nav className="hidden sm:flex items-center gap-6 text-sm text-white">
+            <NavLink
+              to="/"
+              className={({isActive}) => `hover:text-[#D4AF37] ${isActive ? 'text-[#D4AF37] font-semibold' : 'text-white'}`}
+            >Home</NavLink>
+            <NavLink
+              to="/resultados"
+              className={({isActive}) => `hover:text-[#D4AF37] ${isActive ? 'text-[#D4AF37] font-semibold' : 'text-white'}`}
+            >Resultados</NavLink>
           </nav>
           {/* Desktop (>= sm) ações à direita */}
           <div className="hidden sm:flex items-center gap-2">
             {!user && (
-              <Link to="/login" className="inline-flex border border-indigo-600 text-indigo-600 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-indigo-50 text-xs sm:text-sm">Entrar</Link>
+              <Link
+                to="/login"
+                className="inline-flex border px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors"
+              >Entrar</Link>
             )}
             {user && (
               <>
-                <Link to="/perfil" className="inline-flex border border-gray-300 text-gray-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-50 text-xs sm:text-sm">Meu Perfil</Link>
-                <Link to="/meus-imoveis" className="inline-flex border border-gray-300 text-gray-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-50 text-xs sm:text-sm">Meus Imóveis</Link>
+                <Link to="/perfil" className="inline-flex border border-gray-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-800 text-xs sm:text-sm">Meu Perfil</Link>
+                <Link to="/meus-imoveis" className="inline-flex border border-gray-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-800 text-xs sm:text-sm">Meus Imóveis</Link>
                 {isAdmin && (
-                  <Link to="/admin" className="inline-flex border border-amber-600 text-amber-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-amber-50 text-xs sm:text-sm">Admin</Link>
+                  <Link to="/admin" className="inline-flex border border-[#D4AF37] text-[#D4AF37] px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-[#D4AF37] hover:text-black text-xs sm:text-sm">Admin</Link>
                 )}
-                <Link to="/anunciar" className="inline-flex bg-indigo-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-indigo-700 text-xs sm:text-sm">Anunciar imóvel</Link>
+                <Link to="/anunciar" className="inline-flex bg-[#D4AF37] text-black px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-[#c7a233] text-xs sm:text-sm">Anunciar imóvel</Link>
                 <button
                   title="Sair"
                   aria-label="Sair"
-                  className="inline-flex items-center justify-center w-9 h-9 sm:w-9 sm:h-9 rounded-full border border-red-300 text-red-600 hover:bg-red-50"
+                  className="inline-flex items-center justify-center w-9 h-9 sm:w-9 sm:h-9 rounded-full border border-red-400 text-red-400 hover:bg-red-900/20"
                   onClick={async () => { await signOut(); navigate('/') }}
                 >
                   {/* Ícone Logout (seta saindo da porta) */}
@@ -97,18 +107,18 @@ function App() {
           </div>
 
           {/* Mobile (< sm) ações à direita */}
-          <div className="flex sm:hidden items-center gap-2">
+          <div className="flex sm:hidden items-center gap-2 text-white">
             {!user && (
-              <Link to="/login" className="inline-flex border border-indigo-600 text-indigo-600 px-3 py-1.5 rounded-md hover:bg-indigo-50 text-xs">Entrar</Link>
+              <Link to="/login" className="inline-flex border border-[#D4AF37] text-[#D4AF37] px-3 py-1.5 rounded-md hover:bg-[#D4AF37] hover:text-black text-xs">Entrar</Link>
             )}
             {user && (
               <>
-                <Link to="/anunciar" className="inline-flex bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700 text-xs">Anunciar imóvel</Link>
+                <Link to="/anunciar" className="inline-flex bg-[#D4AF37] text-black px-3 py-1.5 rounded-md hover:bg-[#c7a233] text-xs">Anunciar imóvel</Link>
                 <div className="relative">
                   <button
                     aria-label="Menu"
                     title="Menu"
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-500 text-white hover:bg-gray-800"
                     onClick={() => setMobileMenuOpen(v => !v)}
                   >
                     {/* Ícone Hamburguer */}
@@ -155,7 +165,20 @@ function App() {
           <Route path="/admin/users/create" element={<RequireAuth><RequireAdmin><CreateUser /></RequireAdmin></RequireAuth>} />
         </Routes>
       </main>
-      <footer className="border-t py-8 text-center text-sm text-gray-500 bg-white/60">© {new Date().getFullYear()} AdjaImobi — Todos os direitos reservados.</footer>
+      <footer className="border-t border-black py-8 text-center text-sm bg-black text-white">
+        © {new Date().getFullYear()} AdjaImobi — Todos os direitos reservados.
+        {' '}• desenvolvido por{' '}
+        <a
+          href="https://erpluxia.com.br"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#D4AF37] hover:underline"
+        >
+          Erpluxia
+        </a>
+        .
+      </footer>
+      <FloatingWhatsAppButton phone="5511940569156" />
     </div>
   )
 }

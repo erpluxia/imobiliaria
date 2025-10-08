@@ -346,7 +346,7 @@ export default function PropertyDetails() {
             <input name="email" required type="email" placeholder="Seu e-mail" className="border rounded-md px-3 py-2" />
             <input name="phone" required placeholder="Seu telefone" className="border rounded-md px-3 py-2" />
             <textarea name="message" rows={4} defaultValue={`Olá, gostaria de ter mais informações sobre: ${p.title}, ${p.address} — ${p.neighborhood}, ${p.city}.`} className="border rounded-md px-3 py-2" />
-            <button type="submit" className="bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-700">Enviar mensagem</button>
+            <button type="submit" className="bg-black text-white rounded-md px-4 py-2 hover:bg-gray-900">Enviar mensagem</button>
           </form>
 
           <div className="mt-4 text-sm text-gray-600">

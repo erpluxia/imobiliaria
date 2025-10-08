@@ -53,7 +53,7 @@ export default function ListingRow({ p }: { p: any }) {
           </div>
           <div className="flex items-center gap-2">
             <a className="hidden md:inline text-indigo-700 hover:underline text-sm" href="tel:+5511999999999">Telefone</a>
-            <Link to={`/imovel/${p.slug || p.id}`} className="bg-indigo-600 text-white rounded-md px-4 py-2 text-sm hover:bg-indigo-700">Mensagem</Link>
+            <Link to={`/imovel/${p.slug || p.id}`} className="bg-black text-white rounded-md px-4 py-2 text-sm hover:bg-gray-900">Mais detalhes</Link>
           </div>
         </div>
       </div>

@@ -63,7 +63,7 @@ export default function ListingCard({ p }: { p: any }) {
         </div>
 
         <div className="mt-3 flex items-center gap-3">
-          <Link to={link} className="bg-blue-600 text-white rounded-md px-4 py-2 text-sm hover:bg-blue-700">Mensagem</Link>
+          <Link to={link} className="bg-black text-white rounded-md px-4 py-2 text-sm hover:bg-gray-900">Mais detalhes</Link>
           {/* Telefone removido do card; contato via detalhes/WhatsApp */}
         </div>
       </div>
