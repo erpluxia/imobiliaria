@@ -17,6 +17,7 @@ export default function CreateListing() {
   const [priceRentDigits, setPriceRentDigits] = useState<string>('') // dígitos em centavos para aluguel
   const [isForSale, setIsForSale] = useState<boolean>(false)
   const [isForRent, setIsForRent] = useState<boolean>(false)
+  const [isLaunch, setIsLaunch] = useState<boolean>(false)
 
   const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
   const priceSaleDisplay = priceSaleDigits ? brl.format(Number(priceSaleDigits) / 100) : ''
@@ -122,6 +123,7 @@ export default function CreateListing() {
           is_for_rent: isForRent,
           price_sale: priceSale,
           price_rent: priceRent,
+          is_launch: isLaunch,
           // opcional: manter business nulo para registros multi-modalidade
           business: (isForSale && !isForRent) ? 'sale' : (isForRent && !isForSale) ? 'rent' : null,
           is_active: true,
@@ -214,6 +216,14 @@ export default function CreateListing() {
               </label>
               <label className="inline-flex items-center gap-2 text-sm">
                 <input type="checkbox" name="is_for_rent" checked={isForRent} onChange={(e) => setIsForRent(e.target.checked)} className="accent-indigo-600" /> Aluguel
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-gray-700">Características</label>
+            <div className="mt-2 flex items-center gap-4">
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" name="is_launch" checked={isLaunch} onChange={(e) => setIsLaunch(e.target.checked)} className="accent-indigo-600" /> Lançamento
               </label>
             </div>
           </div>

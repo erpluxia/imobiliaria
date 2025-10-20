@@ -1,7 +1,10 @@
 import { Routes, Route, Link, NavLink, useNavigate, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import Home from './pages/Home'
+import HomePremium from './pages/HomePremium'
 import Results from './pages/Results'
+import Launches from './pages/Launches'
+import LaunchesPremium from './pages/LaunchesPremium'
 import PropertyDetails from './pages/PropertyDetails'
 import CreateListing from './pages/CreateListing'
 import SignUp from './pages/SignUp'
@@ -60,6 +63,16 @@ function App() {
               to="/resultados"
               className={({isActive}) => `hover:text-[#D4AF37] ${isActive ? 'text-[#D4AF37] font-semibold' : 'text-white'}`}
             >Resultados</NavLink>
+            <NavLink
+              to="/lancamentos"
+              className={({isActive}) => `hover:text-[#D4AF37] ${isActive ? 'text-[#D4AF37] font-semibold' : 'text-white'}`}
+            >Lançamentos</NavLink>
+            <a
+              href="https://www.youtube.com/@adjaimobiliariaeadministra7447"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#D4AF37] text-white"
+            >Canal</a>
           </nav>
           {/* Desktop (>= sm) ações à direita */}
           <div className="hidden sm:flex items-center gap-2">
@@ -109,7 +122,28 @@ function App() {
           {/* Mobile (< sm) ações à direita */}
           <div className="flex sm:hidden items-center gap-2 text-white">
             {!user && (
-              <Link to="/login" className="inline-flex border border-[#D4AF37] text-[#D4AF37] px-3 py-1.5 rounded-md hover:bg-[#D4AF37] hover:text-black text-xs">Entrar</Link>
+              <>
+                <Link to="/login" className="inline-flex border border-[#D4AF37] text-[#D4AF37] px-3 py-1.5 rounded-md hover:bg-[#D4AF37] hover:text-black text-xs">Entrar</Link>
+                <div className="relative">
+                  <button
+                    aria-label="Menu"
+                    title="Menu"
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-500 text-white hover:bg-gray-800"
+                    onClick={() => setMobileMenuOpen(v => !v)}
+                  >
+                    {/* Ícone Hamburguer */}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                  </button>
+                  {mobileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-44 rounded-md border bg-white shadow-md py-1 z-20">
+                      <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Home</Link>
+                      <Link to="/resultados" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Resultados</Link>
+                      <Link to="/lancamentos" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Lançamentos</Link>
+                      <a href="https://www.youtube.com/@adjaimobiliariaeadministra7447" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Canal</a>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
             {user && (
               <>
@@ -126,6 +160,11 @@ function App() {
                   </button>
                   {mobileMenuOpen && (
                     <div className="absolute right-0 mt-2 w-44 rounded-md border bg-white shadow-md py-1 z-20">
+                      <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Home</Link>
+                      <Link to="/resultados" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Resultados</Link>
+                      <Link to="/lancamentos" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Lançamentos</Link>
+                      <a href="https://www.youtube.com/@adjaimobiliariaeadministra7447" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Canal</a>
+                      <div className="border-t my-1"></div>
                       <Link to="/meus-imoveis" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Meus Imóveis</Link>
                       {isAdmin && (
                         <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-amber-700 hover:bg-amber-50">Admin</Link>
@@ -148,7 +187,10 @@ function App() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/home-premium" element={<HomePremium />} />
           <Route path="/resultados" element={<Results />} />
+          <Route path="/lancamentos" element={<Launches />} />
+          <Route path="/lancamentos-premium" element={<LaunchesPremium />} />
           {/* Rota por slug (nova) e fallback por id (legado) */}
           <Route path="/imovel/:slug" element={<PropertyDetails />} />
           <Route path="/imovel/id/:id" element={<PropertyDetails />} />

@@ -21,6 +21,7 @@ export default function EditListing() {
   const [type, setType] = useState<'apartment' | 'house' | 'commercial'>('apartment')
   const [isForSale, setIsForSale] = useState<boolean>(false)
   const [isForRent, setIsForRent] = useState<boolean>(false)
+  const [isLaunch, setIsLaunch] = useState<boolean>(false)
   const [area, setArea] = useState<number | ''>('')
   const [bedrooms, setBedrooms] = useState<number | ''>('')
   const [bathrooms, setBathrooms] = useState<number | ''>('')
@@ -76,6 +77,7 @@ export default function EditListing() {
         setType(data.type ?? 'apartment')
         setIsForSale(!!data.is_for_sale)
         setIsForRent(!!data.is_for_rent)
+        setIsLaunch(!!data.is_launch)
         setArea(typeof data.area_m2 === 'number' ? data.area_m2 : '')
         setBedrooms(typeof data.bedrooms === 'number' ? data.bedrooms : '')
         setBathrooms(typeof data.bathrooms === 'number' ? data.bathrooms : '')
@@ -124,6 +126,7 @@ export default function EditListing() {
           is_for_rent: isForRent,
           price_sale: priceSale,
           price_rent: priceRent,
+          is_launch: isLaunch,
           // legado: manter price nulo para múltiplas modalidades
           price: null,
           area_m2: typeof area === 'number' ? area : null,
@@ -281,6 +284,15 @@ export default function EditListing() {
                   <input type="checkbox" checked={isForRent} onChange={(e) => setIsForRent(e.target.checked)} className="accent-indigo-600" /> Aluguel
                 </label>
               </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-semibold text-gray-700">Características</label>
+            <div className="mt-2 flex items-center gap-4">
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={isLaunch} onChange={(e) => setIsLaunch(e.target.checked)} className="accent-indigo-600" /> Lançamento
+              </label>
             </div>
           </div>
 

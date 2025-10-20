@@ -10,6 +10,7 @@ export type Property = {
   is_for_rent: boolean;
   price_sale?: number; // à vista
   price_rent?: number; // por mês
+  is_launch: boolean; // indica se é lançamento/empreendimento novo
   bedrooms: number;
   bathrooms: number;
   parking: number;
@@ -32,6 +33,7 @@ export const PROPERTIES: Property[] = [
     is_for_sale: true,
     is_for_rent: false,
     price_sale: 850000,
+    is_launch: false,
     bedrooms: 2,
     bathrooms: 2,
     parking: 1,
@@ -59,6 +61,7 @@ export const PROPERTIES: Property[] = [
     is_for_sale: false,
     is_for_rent: true,
     price_rent: 4500,
+    is_launch: false,
     bedrooms: 3,
     bathrooms: 3,
     parking: 2,
@@ -86,6 +89,7 @@ export const PROPERTIES: Property[] = [
     is_for_sale: false,
     is_for_rent: true,
     price_rent: 3800,
+    is_launch: false,
     bedrooms: 1,
     bathrooms: 1,
     parking: 1,
