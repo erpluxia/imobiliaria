@@ -2,13 +2,17 @@ import { useEffect, useState } from 'react'
 import SearchBar from '../components/SearchBar'
 import ListingCard from '../components/ListingCard'
 import { supabase } from '../lib/supabaseClient'
+import { useCompany } from '../contexts/CompanyContext'
 
 export default function Home() {
+  const { company } = useCompany()
   const [featured, setFeatured] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!company) return
+    
     let active = true
     async function load() {
       setLoading(true)
@@ -17,6 +21,7 @@ export default function Home() {
         const { data, error } = await supabase
           .from('properties')
           .select('*')
+          .eq('company_id', company!.id)
           .eq('is_active', true)
           .order('created_at', { ascending: false })
           .limit(6)
@@ -32,7 +37,7 @@ export default function Home() {
     }
     load()
     return () => { active = false }
-  }, [])
+  }, [company])
 
   return (
     <>

@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { useCompany } from '../contexts/CompanyContext'
 import ListingRow from '../components/ListingRow'
 
 export default function Launches() {
+  const { company } = useCompany()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [launches, setLaunches] = useState<any[]>([])
 
   useEffect(() => {
+    if (!company) return
+    
     let active = true
     async function fetchLaunches() {
       setLoading(true)
@@ -17,6 +21,7 @@ export default function Launches() {
         const { data, error } = await supabase
           .from('properties')
           .select('*')
+          .eq('company_id', company!.id)
           .eq('is_active', true)
           .eq('is_launch', true)
           .order('created_at', { ascending: false })
@@ -32,7 +37,7 @@ export default function Launches() {
     }
     fetchLaunches()
     return () => { active = false }
-  }, [])
+  }, [company])
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-6">

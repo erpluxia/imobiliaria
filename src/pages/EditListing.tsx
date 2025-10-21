@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../auth/AuthContext'
+import { useCompany } from '../contexts/CompanyContext'
 
 export default function EditListing() {
+  const { company } = useCompany()
   const { id } = useParams()
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
@@ -49,6 +51,8 @@ export default function EditListing() {
   const maxPos = useMemo(() => images.reduce((m, it) => Math.max(m, it.position ?? 0), -1), [images])
 
   useEffect(() => {
+    if (!company) return
+    
     let active = true
     async function load() {
       if (!id) return
@@ -63,6 +67,7 @@ export default function EditListing() {
           .from('properties')
           .select('*')
           .eq('id', id)
+          .eq('company_id', company!.id)
           .single()
         if (error) throw error
         if (!data) throw new Error('Imóvel não encontrado')
@@ -102,7 +107,7 @@ export default function EditListing() {
     }
     load()
     return () => { active = false }
-  }, [id])
+  }, [company, id, isAdmin])
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault()

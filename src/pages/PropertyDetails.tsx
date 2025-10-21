@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../auth/AuthContext'
+import { useCompany } from '../contexts/CompanyContext'
 
 export default function PropertyDetails() {
+  const { company } = useCompany()
   const { slug, id } = useParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -23,6 +25,8 @@ export default function PropertyDetails() {
   }, [current, images.length])
 
   useEffect(() => {
+    if (!company) return
+    
     let active = true
     async function load() {
       setLoading(true)
@@ -34,6 +38,7 @@ export default function PropertyDetails() {
             .from('properties')
             .select('*')
             .eq('slug', slug)
+            .eq('company_id', company!.id)
             .single()
           if (error) throw error
           property = data
@@ -42,6 +47,7 @@ export default function PropertyDetails() {
             .from('properties')
             .select('*')
             .eq('id', id)
+            .eq('company_id', company!.id)
             .single()
           if (error) throw error
           property = data
@@ -89,7 +95,7 @@ export default function PropertyDetails() {
     }
     load()
     return () => { active = false }
-  }, [slug, id])
+  }, [company, slug, id])
 
   // Garante que a miniatura ativa fique visível no carrossel
   useEffect(() => {

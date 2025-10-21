@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { useCompany } from '../contexts/CompanyContext'
 import ListingRow from '../components/ListingRow'
 
 export default function Results() {
+  const { company } = useCompany()
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
@@ -20,12 +22,14 @@ export default function Results() {
   }), [params])
 
   useEffect(() => {
+    if (!company) return
+    
     let active = true
     async function fetchData() {
       setLoading(true)
       setError(null)
       try {
-        let q = supabase.from('properties').select('*').eq('is_active', true).order('created_at', { ascending: false })
+        let q = supabase.from('properties').select('*').eq('company_id', company!.id).eq('is_active', true).order('created_at', { ascending: false })
         if (query.city) q = q.ilike('city', `%${query.city}%`)
         if (typeof query.bedrooms === 'number') q = q.gte('bedrooms', query.bedrooms)
         // Texto livre básico em title/description
@@ -70,7 +74,7 @@ export default function Results() {
     }
     fetchData()
     return () => { active = false }
-  }, [query])
+  }, [company, query])
 
   function updateParam(name: string, value: string) {
     const next = new URLSearchParams(params)

@@ -15,15 +15,23 @@ import EditListing from './pages/EditListing'
 import { useAuth } from './auth/AuthContext'
 import { RequireAuth } from './auth/RequireAuth'
 import { RequireAdmin } from './auth/RequireAdmin'
+import { RequireSuperAdmin } from './auth/RequireSuperAdmin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminListings from './pages/admin/AdminListings'
 import AdminUsers from './pages/admin/AdminUsers'
 import CreateUser from './pages/admin/CreateUser'
+import CompaniesManagement from './pages/super-admin/CompaniesManagement'
+import CreateCompany from './pages/super-admin/CreateCompany'
+import EditCompany from './pages/super-admin/EditCompany'
+import ManageDomains from './pages/super-admin/ManageDomains'
+import ManageCompanyUsers from './pages/super-admin/ManageCompanyUsers'
 import { supabase } from './lib/supabaseClient'
 import FloatingWhatsAppButton from './components/FloatingWhatsAppButton'
+import { useCompany } from './contexts/CompanyContext'
 
 function App() {
   const { user, signOut, isAdmin } = useAuth()
+  const { company, loading: companyLoading } = useCompany()
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [allowSignups, setAllowSignups] = useState<boolean | null>(null)
@@ -46,13 +54,42 @@ function App() {
     loadSettings()
     return () => { active = false }
   }, [])
+  // Mostrar loading enquanto carrega empresa
+  if (companyLoading) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Se não encontrou empresa, mostrar erro
+  if (!company) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Empresa não encontrada</h1>
+          <p className="text-gray-600">Este domínio não está configurado corretamente.</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-dvh flex flex-col">
       <header className="sticky top-0 z-10 bg-black border-b border-black">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img src="/logonovo.png" alt="AdjaImobi" className="w-auto transform origin-left scale-[1.15] md:scale-[1.25]" style={{ height: '3rem' }} />
-            <span className="sr-only">AdjaImobi</span>
+            <img 
+              src={company.logo_url || '/logonovo.png'} 
+              alt={company.name} 
+              className="w-auto transform origin-left scale-[1.15] md:scale-[1.25]" 
+              style={{ height: '3rem' }} 
+            />
+            <span className="sr-only">{company.name}</span>
           </Link>
           <nav className="hidden sm:flex items-center gap-6 text-sm text-white">
             <NavLink
@@ -67,12 +104,14 @@ function App() {
               to="/lancamentos"
               className={({isActive}) => `hover:text-[#D4AF37] ${isActive ? 'text-[#D4AF37] font-semibold' : 'text-white'}`}
             >Lançamentos</NavLink>
-            <a
-              href="https://www.youtube.com/@adjaimobiliariaeadministra7447"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-[#D4AF37] text-white"
-            >Canal</a>
+            {company.youtube_url && (
+              <a
+                href={company.youtube_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#D4AF37] text-white"
+              >Canal</a>
+            )}
           </nav>
           {/* Desktop (>= sm) ações à direita */}
           <div className="hidden sm:flex items-center gap-2">
@@ -139,7 +178,9 @@ function App() {
                       <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Home</Link>
                       <Link to="/resultados" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Resultados</Link>
                       <Link to="/lancamentos" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Lançamentos</Link>
-                      <a href="https://www.youtube.com/@adjaimobiliariaeadministra7447" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Canal</a>
+                      {company.youtube_url && (
+                        <a href={company.youtube_url} target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Canal</a>
+                      )}
                     </div>
                   )}
                 </div>
@@ -163,7 +204,9 @@ function App() {
                       <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Home</Link>
                       <Link to="/resultados" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Resultados</Link>
                       <Link to="/lancamentos" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Lançamentos</Link>
-                      <a href="https://www.youtube.com/@adjaimobiliariaeadministra7447" target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Canal</a>
+                      {company.youtube_url && (
+                        <a href={company.youtube_url} target="_blank" rel="noopener noreferrer" className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Canal</a>
+                      )}
                       <div className="border-t my-1"></div>
                       <Link to="/meus-imoveis" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Meus Imóveis</Link>
                       {isAdmin && (
@@ -205,10 +248,16 @@ function App() {
           <Route path="/admin/listings" element={<RequireAuth><RequireAdmin><AdminListings /></RequireAdmin></RequireAuth>} />
           <Route path="/admin/users" element={<RequireAuth><RequireAdmin><AdminUsers /></RequireAdmin></RequireAuth>} />
           <Route path="/admin/users/create" element={<RequireAuth><RequireAdmin><CreateUser /></RequireAdmin></RequireAuth>} />
+          {/* Super Admin */}
+          <Route path="/super-admin/companies" element={<RequireAuth><RequireSuperAdmin><CompaniesManagement /></RequireSuperAdmin></RequireAuth>} />
+          <Route path="/super-admin/companies/create" element={<RequireAuth><RequireSuperAdmin><CreateCompany /></RequireSuperAdmin></RequireAuth>} />
+          <Route path="/super-admin/companies/:id/edit" element={<RequireAuth><RequireSuperAdmin><EditCompany /></RequireSuperAdmin></RequireAuth>} />
+          <Route path="/super-admin/companies/:id/domains" element={<RequireAuth><RequireSuperAdmin><ManageDomains /></RequireSuperAdmin></RequireAuth>} />
+          <Route path="/super-admin/companies/:id/users" element={<RequireAuth><RequireSuperAdmin><ManageCompanyUsers /></RequireSuperAdmin></RequireAuth>} />
         </Routes>
       </main>
       <footer className="border-t border-black py-8 text-center text-sm bg-black text-white">
-        © {new Date().getFullYear()} AdjaImobi — Todos os direitos reservados.
+        © {new Date().getFullYear()} {company.name} — Todos os direitos reservados.
         {' '}• desenvolvido por{' '}
         <a
           href="https://erpluxia.com.br"
@@ -220,7 +269,7 @@ function App() {
         </a>
         .
       </footer>
-      <FloatingWhatsAppButton phone="5511940569156" />
+      {company.whatsapp && <FloatingWhatsAppButton phone={company.whatsapp} />}
     </div>
   )
 }

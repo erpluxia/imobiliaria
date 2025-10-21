@@ -11,8 +11,9 @@ interface AuthContextValue {
   signUp: (params: { email: string; password: string; fullName?: string; phone?: string }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
   // extras
-  profile: { role?: 'admin' | 'user'; status?: 'active' | 'blocked'; full_name?: string | null; phone?: string | null } | null
+  profile: { role?: 'admin' | 'user' | 'super_admin'; status?: 'active' | 'blocked'; full_name?: string | null; phone?: string | null } | null
   isAdmin: boolean
+  isSuperAdmin: boolean
   isBlocked: boolean
 }
 
@@ -22,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState<{ role?: 'admin' | 'user'; status?: 'active' | 'blocked'; full_name?: string | null; phone?: string | null } | null>(null)
+  const [profile, setProfile] = useState<{ role?: 'admin' | 'user' | 'super_admin'; status?: 'active' | 'blocked'; full_name?: string | null; phone?: string | null } | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -129,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const isAdmin = (profile?.role ?? 'user') === 'admin'
+  const isSuperAdmin = (profile?.role ?? 'user') === 'super_admin'
   const isBlocked = (profile?.status ?? 'active') === 'blocked'
 
   const value = useMemo<AuthContextValue>(() => ({
@@ -140,8 +142,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     profile,
     isAdmin,
+    isSuperAdmin,
     isBlocked,
-  }), [user, session, loading, profile, isAdmin, isBlocked])
+  }), [user, session, loading, profile, isAdmin, isSuperAdmin, isBlocked])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

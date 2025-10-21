@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../auth/AuthContext'
 
 function Card({ to, icon, title, desc }: { to: string; icon: React.ReactNode; title: string; desc: string }) {
   return (
@@ -40,9 +41,22 @@ const icons = {
       <line x1="22" y1="11" x2="16" y2="11" />
     </svg>
   ),
+  companies: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M3 21h18" />
+      <path d="M5 21V7l8-4v18" />
+      <path d="M19 21V11l-6-4" />
+      <path d="M9 9v.01" />
+      <path d="M9 12v.01" />
+      <path d="M9 15v.01" />
+      <path d="M9 18v.01" />
+    </svg>
+  ),
 }
 
 export default function AdminDashboard() {
+  const { isSuperAdmin } = useAuth()
+
   return (
     <section className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-xl font-semibold mb-6">Admin</h1>
@@ -66,6 +80,14 @@ export default function AdminDashboard() {
           title="Criar usuário"
           desc="Cadastrar um novo usuário (cadastro público desativado)."
         />
+        {isSuperAdmin && (
+          <Card
+            to="/super-admin/companies"
+            icon={icons.companies}
+            title="Gerenciar Empresas"
+            desc="Listar, criar e gerenciar todas as empresas da plataforma (Super Admin)."
+          />
+        )}
       </div>
     </section>
   )

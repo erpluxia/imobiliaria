@@ -2,10 +2,12 @@ import type { FormEvent } from 'react'
 import { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { useCompany } from '../contexts/CompanyContext'
 
 type Preview = { name: string; dataUrl: string; file?: File }
 
 export default function CreateListing() {
+  const { company } = useCompany()
   const navigate = useNavigate()
   const [previews, setPreviews] = useState<Preview[]>([])
   const [coverIndex, setCoverIndex] = useState<number | null>(null)
@@ -101,11 +103,15 @@ export default function CreateListing() {
       if (userErr) throw userErr
       if (!user) throw new Error('Você precisa estar logado para anunciar.')
 
-      // 2) Criar imóvel
+      // 2) Validar empresa
+      if (!company) throw new Error('Empresa não identificada')
+
+      // 3) Criar imóvel
       const insertRes = await supabase
         .from('properties')
         .insert({
           owner_id: user.id,
+          company_id: company.id,
           title: String(fd.get('title') || ''),
           description: String(fd.get('description') || ''),
           city: String(fd.get('city') || ''),
@@ -135,7 +141,7 @@ export default function CreateListing() {
       const propertyId = insertRes.data.id as string
       const slug = insertRes.data.slug as string
 
-      // 3) Upload múltiplo de arquivos selecionados
+      // 4) Upload múltiplo de arquivos selecionados
       const uploadedUrls: string[] = []
       for (const p of previews) {
         if (!p.file) continue

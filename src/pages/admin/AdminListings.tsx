@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
+import { useCompany } from '../../contexts/CompanyContext'
 
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function AdminListings() {
+  const { company } = useCompany()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [list, setList] = useState<any[]>([])
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!company) return
+    
     let active = true
     async function load() {
       setLoading(true)
@@ -19,6 +23,7 @@ export default function AdminListings() {
         const { data, error } = await supabase
           .from('properties')
           .select('id, title, city, neighborhood, is_for_sale, is_for_rent, price_sale, price_rent, cover_image_url, slug, created_at')
+          .eq('company_id', company!.id)
           .order('created_at', { ascending: false })
           .limit(200)
         if (error) throw error
@@ -31,7 +36,7 @@ export default function AdminListings() {
     }
     load()
     return () => { active = false }
-  }, [])
+  }, [company])
 
   async function handleDelete(property: any) {
     if (!confirm(`Tem certeza que deseja excluir o imóvel "${property.title}"? Esta ação não pode ser desfeita.`)) return
