@@ -31,7 +31,7 @@ export async function detectCompanyByDomain(): Promise<Company | null> {
       `)
       .eq('domain', hostname)
       .eq('is_verified', true)
-      .single()
+      .maybeSingle()
 
     if (error) {
       console.warn('[Company Detection] Erro ao buscar empresa:', error.message)
