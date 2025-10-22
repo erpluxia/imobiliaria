@@ -46,7 +46,7 @@ Deno.serve(async (req: Request) => {
       .eq('id', userId)
       .maybeSingle();
     if (profErr) return new Response(profErr.message, { status: 500, headers: { ...corsHeaders } });
-    if (prof?.role !== 'admin') return new Response('Forbidden', { status: 403, headers: { ...corsHeaders } });
+    if (prof?.role !== 'admin' && prof?.role !== 'super_admin') return new Response('User not allowed', { status: 403, headers: { ...corsHeaders } });
 
     const body = await req.json().catch(() => ({}));
     const { email, password, fullName, phone, role = 'user', status = 'active' } = body as any;

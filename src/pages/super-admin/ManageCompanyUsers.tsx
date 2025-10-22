@@ -87,27 +87,47 @@ export default function ManageCompanyUsers() {
     const companyRole = formData.get('company_role') as 'user' | 'company_admin'
 
     try {
-      // Criar usuário no auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true
-      })
+      // Obter token do usuário atual
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('Sessão não encontrada')
+      }
 
-      if (authError) throw authError
+      // Chamar Edge Function para criar usuário
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            fullName,
+            phone,
+            role,
+            status: 'active'
+          })
+        }
+      )
 
-      // Atualizar profile
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Erro ao criar usuário')
+      }
+
+      const { userId } = await response.json()
+
+      // Atualizar profile com company_id e company_role
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           company_id: id,
-          role,
-          company_role: companyRole,
-          full_name: fullName || null,
-          phone: phone || null,
-          status: 'active'
+          company_role: companyRole
         })
-        .eq('id', authData.user.id)
+        .eq('id', userId)
 
       if (profileError) throw profileError
 
