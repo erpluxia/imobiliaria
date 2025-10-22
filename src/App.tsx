@@ -80,7 +80,7 @@ function App() {
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <header className="sticky top-0 z-10 bg-black border-b border-black">
+      <header className="sticky top-0 z-10 bg-primary border-b border-primary">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center">
             <img 
@@ -91,25 +91,25 @@ function App() {
             />
             <span className="sr-only">{company.name}</span>
           </Link>
-          <nav className="hidden sm:flex items-center gap-6 text-sm text-white">
+          <nav className="hidden sm:flex items-center gap-6 text-sm text-on-primary">
             <NavLink
               to="/"
-              className={({isActive}) => `hover:text-primary ${isActive ? 'text-primary font-semibold' : 'text-white'}`}
+              className={({isActive}) => `hover:text-secondary ${isActive ? 'text-secondary font-semibold' : 'text-on-primary'}`}
             >Home</NavLink>
             <NavLink
               to="/resultados"
-              className={({isActive}) => `hover:text-primary ${isActive ? 'text-primary font-semibold' : 'text-white'}`}
+              className={({isActive}) => `hover:text-secondary ${isActive ? 'text-secondary font-semibold' : 'text-on-primary'}`}
             >Resultados</NavLink>
             <NavLink
               to="/lancamentos"
-              className={({isActive}) => `hover:text-primary ${isActive ? 'text-primary font-semibold' : 'text-white'}`}
+              className={({isActive}) => `hover:text-secondary ${isActive ? 'text-secondary font-semibold' : 'text-on-primary'}`}
             >Lançamentos</NavLink>
             {company.youtube_url && (
               <a
                 href={company.youtube_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-primary text-white"
+                className="hover:text-secondary text-on-primary"
               >Canal</a>
             )}
           </nav>
@@ -118,17 +118,17 @@ function App() {
             {!user && (
               <Link
                 to="/login"
-                className="inline-flex border px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm border-primary text-primary hover:bg-primary hover:text-black transition-colors"
+                className="inline-flex border px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm border-secondary text-on-primary hover:bg-secondary hover:text-white transition-colors"
               >Entrar</Link>
             )}
             {user && (
               <>
-                <Link to="/perfil" className="inline-flex border border-gray-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-800 text-xs sm:text-sm">Meu Perfil</Link>
-                <Link to="/meus-imoveis" className="inline-flex border border-gray-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-800 text-xs sm:text-sm">Meus Imóveis</Link>
+                <Link to="/perfil" className="inline-flex border border-secondary text-on-primary px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-secondary hover:text-white text-xs sm:text-sm">Meu Perfil</Link>
+                <Link to="/meus-imoveis" className="inline-flex border border-secondary text-on-primary px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-secondary hover:text-white text-xs sm:text-sm">Meus Imóveis</Link>
                 {isAdmin && (
-                  <Link to="/admin" className="inline-flex border border-primary text-primary px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-primary hover:text-black text-xs sm:text-sm">Admin</Link>
+                  <Link to="/admin" className="inline-flex border border-secondary text-on-primary px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-secondary hover:text-white text-xs sm:text-sm">Admin</Link>
                 )}
-                <Link to="/anunciar" className="inline-flex bg-primary text-black px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-primary-dark text-xs sm:text-sm">Anunciar imóvel</Link>
+                <Link to="/anunciar" className="inline-flex bg-secondary text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-secondary hover:opacity-90 text-xs sm:text-sm">Anunciar imóvel</Link>
                 <button
                   title="Sair"
                   aria-label="Sair"
@@ -159,15 +159,15 @@ function App() {
           </div>
 
           {/* Mobile (< sm) ações à direita */}
-          <div className="flex sm:hidden items-center gap-2 text-white">
+          <div className="flex sm:hidden items-center gap-2 text-on-primary">
             {!user && (
               <>
-                <Link to="/login" className="inline-flex border border-primary text-primary px-3 py-1.5 rounded-md hover:bg-primary hover:text-black text-xs">Entrar</Link>
+                <Link to="/login" className="inline-flex border border-secondary text-on-primary px-3 py-1.5 rounded-md hover:bg-secondary hover:text-white text-xs">Entrar</Link>
                 <div className="relative">
                   <button
                     aria-label="Menu"
                     title="Menu"
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-500 text-white hover:bg-gray-800"
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-secondary text-on-primary hover:bg-secondary hover:text-white"
                     onClick={() => setMobileMenuOpen(v => !v)}
                   >
                     {/* Ícone Hamburguer */}
@@ -188,12 +188,12 @@ function App() {
             )}
             {user && (
               <>
-                <Link to="/anunciar" className="inline-flex bg-primary text-black px-3 py-1.5 rounded-md hover:bg-primary-dark text-xs">Anunciar imóvel</Link>
+                <Link to="/anunciar" className="inline-flex bg-secondary text-white px-3 py-1.5 rounded-md hover:opacity-90 text-xs">Anunciar imóvel</Link>
                 <div className="relative">
                   <button
                     aria-label="Menu"
                     title="Menu"
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-500 text-white hover:bg-gray-800"
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-secondary text-on-primary hover:bg-secondary hover:text-white"
                     onClick={() => setMobileMenuOpen(v => !v)}
                   >
                     {/* Ícone Hamburguer */}
@@ -256,14 +256,14 @@ function App() {
           <Route path="/super-admin/companies/:id/users" element={<RequireAuth><RequireSuperAdmin><ManageCompanyUsers /></RequireSuperAdmin></RequireAuth>} />
         </Routes>
       </main>
-      <footer className="border-t border-black py-8 text-center text-sm bg-black text-white">
+      <footer className="border-t border-primary py-8 text-center text-sm bg-primary text-on-primary">
         © {new Date().getFullYear()} {company.name} — Todos os direitos reservados.
         {' '}• desenvolvido por{' '}
         <a
           href="https://erpluxia.com.br"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary hover:underline"
+          className="text-secondary hover:underline"
         >
           Erpluxia
         </a>

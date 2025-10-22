@@ -109,6 +109,7 @@ export function applyBranding(company: Company): void {
     // Atualizar CSS variables
     document.documentElement.style.setProperty('--primary-color', company.primary_color)
     document.documentElement.style.setProperty('--secondary-color', company.secondary_color)
+    document.documentElement.style.setProperty('--text-color', company.text_color || '#FFFFFF')
     
     // Atualizar título da página
     document.title = company.name

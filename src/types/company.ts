@@ -10,6 +10,7 @@ export interface Company {
   favicon_url: string | null
   primary_color: string
   secondary_color: string
+  text_color: string
   
   // Contato
   phone: string | null

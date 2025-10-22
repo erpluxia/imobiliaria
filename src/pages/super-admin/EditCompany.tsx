@@ -130,6 +130,7 @@ export default function EditCompany() {
           instagram_url: formData.get('instagram_url') as string || null,
           primary_color: formData.get('primary_color') as string,
           secondary_color: formData.get('secondary_color') as string,
+          text_color: formData.get('text_color') as string,
           subscription_plan: formData.get('subscription_plan') as any,
           allow_user_listings: formData.get('allow_user_listings') === 'on',
           require_admin_approval: formData.get('require_admin_approval') === 'on',
@@ -402,10 +403,10 @@ export default function EditCompany() {
           </div>
 
           {/* Cores */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="primary_color" className="block text-sm font-medium text-gray-700 mb-1">
-                Cor Primária
+                Cor Primária (Background)
               </label>
               <input
                 type="color"
@@ -414,11 +415,17 @@ export default function EditCompany() {
                 defaultValue={company.primary_color}
                 className="w-full h-10 px-1 py-1 border border-gray-300 rounded-md"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Código: {company.primary_color}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Usada no header e footer
+              </p>
             </div>
 
             <div>
               <label htmlFor="secondary_color" className="block text-sm font-medium text-gray-700 mb-1">
-                Cor Secundária
+                Cor Secundária (Botões)
               </label>
               <input
                 type="color"
@@ -427,6 +434,148 @@ export default function EditCompany() {
                 defaultValue={company.secondary_color}
                 className="w-full h-10 px-1 py-1 border border-gray-300 rounded-md"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Código: {company.secondary_color}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Usada em botões e links
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="text_color" className="block text-sm font-medium text-gray-700 mb-1">
+                Cor do Texto
+              </label>
+              <input
+                type="color"
+                id="text_color"
+                name="text_color"
+                defaultValue={company.text_color || '#FFFFFF'}
+                className="w-full h-10 px-1 py-1 border border-gray-300 rounded-md"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Código: {company.text_color || '#FFFFFF'}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Usada no header e footer
+              </p>
+            </div>
+          </div>
+
+          {/* Guia Visual de Uso das Cores */}
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">📍 Onde as cores são usadas no sistema</h3>
+            
+            <div className="space-y-4">
+              {/* Cor Primária */}
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded" style={{ backgroundColor: company.primary_color }}></span>
+                  Cor Primária (Background)
+                </h4>
+                <ul className="text-xs text-gray-600 space-y-1 ml-6">
+                  <li>• <strong>Header:</strong> Fundo do cabeçalho</li>
+                  <li>• <strong>Footer:</strong> Fundo do rodapé</li>
+                  <li>• <strong>Estrutura:</strong> Background principal do site</li>
+                </ul>
+              </div>
+
+              {/* Cor Secundária */}
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded border border-gray-300" style={{ backgroundColor: company.secondary_color }}></span>
+                  Cor Secundária (Botões e Links)
+                </h4>
+                <ul className="text-xs text-gray-600 space-y-1 ml-6">
+                  <li>• <strong>Botões principais:</strong> "Entrar", "Admin", "Anunciar imóvel", "Buscar"</li>
+                  <li>• <strong>Links ativos:</strong> Navegação ativa (Home, Resultados, Lançamentos)</li>
+                  <li>• <strong>Cards de imóveis:</strong> Badge "Aluguel", botão "Mais detalhes"</li>
+                  <li>• <strong>Formulários:</strong> Borda de foco (focus ring) dos campos</li>
+                  <li>• <strong>Links:</strong> "Ver todos", link Erpluxia no footer</li>
+                </ul>
+              </div>
+
+              {/* Cor do Texto */}
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded border border-gray-300" style={{ backgroundColor: company.text_color || '#FFFFFF' }}></span>
+                  Cor do Texto
+                </h4>
+                <ul className="text-xs text-gray-600 space-y-1 ml-6">
+                  <li>• <strong>Header:</strong> Texto da navegação e botões</li>
+                  <li>• <strong>Footer:</strong> Texto do rodapé</li>
+                  <li>• <strong>Importante:</strong> Deve ter bom contraste com a cor primária</li>
+                </ul>
+              </div>
+
+              {/* Preview Visual */}
+              <div className="mt-4 pt-4 border-t border-gray-300">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Preview de Elementos:</h4>
+                <div className="space-y-3">
+                  {/* Header Preview */}
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="px-4 py-2 rounded-md text-sm font-medium"
+                      style={{ backgroundColor: company.primary_color, color: company.text_color || '#FFFFFF' }}
+                    >
+                      Header / Footer
+                    </div>
+                    <span className="text-xs text-gray-500">Background do cabeçalho e rodapé</span>
+                  </div>
+
+                  {/* Botão Secundário */}
+                  <div className="flex items-center gap-3">
+                    <button 
+                      type="button"
+                      className="px-4 py-2 rounded-md text-white text-sm font-medium"
+                      style={{ backgroundColor: company.secondary_color }}
+                    >
+                      Botão de Ação
+                    </button>
+                    <span className="text-xs text-gray-500">Botões principais (Anunciar, Buscar)</span>
+                  </div>
+
+                  {/* Botão Outline */}
+                  <div className="flex items-center gap-3">
+                    <button 
+                      type="button"
+                      className="px-4 py-2 rounded-md border-2 text-sm font-medium"
+                      style={{ 
+                        borderColor: company.secondary_color, 
+                        color: company.text_color || '#FFFFFF',
+                        backgroundColor: company.primary_color
+                      }}
+                    >
+                      Botão Outline
+                    </button>
+                    <span className="text-xs text-gray-500">Botões no header (Entrar, Admin)</span>
+                  </div>
+
+                  {/* Link */}
+                  <div className="flex items-center gap-3">
+                    <a 
+                      href="#"
+                      className="text-sm font-medium underline"
+                      style={{ color: company.secondary_color }}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      Link de exemplo
+                    </a>
+                    <span className="text-xs text-gray-500">Links e navegação ativa</span>
+                  </div>
+
+                  {/* Badge */}
+                  <div className="flex items-center gap-3">
+                    <span 
+                      className="text-xs px-2 py-1 rounded-full text-white font-medium"
+                      style={{ backgroundColor: company.secondary_color }}
+                    >
+                      Aluguel
+                    </span>
+                    <span className="text-xs text-gray-500">Badges nos cards de imóveis</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
