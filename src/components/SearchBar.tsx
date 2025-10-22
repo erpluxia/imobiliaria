@@ -23,24 +23,24 @@ export default function SearchBar() {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Busque por bairro, cidade ou palavra-chave"
-        className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ring-primary"
       />
       <input
         value={city}
         onChange={(e) => setCity(e.target.value)}
         placeholder="Cidade"
-        className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ring-primary"
       />
       <select
         value={business}
         onChange={(e) => setBusiness(e.target.value)}
-        className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ring-primary"
       >
         <option value="">Negócio</option>
         <option value="rent">Aluguel</option>
         <option value="sale">Venda</option>
       </select>
-      <button type="submit" className="bg-black text-white rounded-md px-4 py-2 hover:bg-gray-900">
+      <button type="submit" className="bg-primary text-white rounded-md px-4 py-2 hover:bg-primary-dark">
         Buscar
       </button>
     </form>

@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* CSS Variables para cores dinâmicas da empresa */
+:root {
+  --primary-color: #D4AF37;
+  --secondary-color: #000000;
+}
+
 /* Estilos base globais (opcional) */
 html, body, #root {
   height: 100%;
@@ -9,4 +15,46 @@ body {
   color: #0f172a; /* slate-900-ish */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Classes utilitárias para cores dinâmicas */
+.bg-primary {
+  background-color: var(--primary-color);
+}
+
+.text-primary {
+  color: var(--primary-color);
+}
+
+.border-primary {
+  border-color: var(--primary-color);
+}
+
+.bg-secondary {
+  background-color: var(--secondary-color);
+}
+
+.text-secondary {
+  color: var(--secondary-color);
+}
+
+.border-secondary {
+  border-color: var(--secondary-color);
+}
+
+.hover\:bg-primary:hover {
+  background-color: var(--primary-color);
+}
+
+.hover\:text-primary:hover {
+  color: var(--primary-color);
+}
+
+.hover\:border-primary:hover {
+  border-color: var(--primary-color);
+}
+
+/* Variação mais escura da cor primária para hover */
+.hover\:bg-primary-dark:hover {
+  background-color: color-mix(in srgb, var(--primary-color) 85%, black);
 }

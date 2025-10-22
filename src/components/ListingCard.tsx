@@ -26,7 +26,7 @@ export default function ListingCard({ p }: { p: any }) {
             <span className="text-[11px] px-2 py-1 rounded-full bg-emerald-600 text-white capitalize">Venda</span>
           )}
           {p.is_for_rent && (
-            <span className="text-[11px] px-2 py-1 rounded-full bg-indigo-600 text-white capitalize">Aluguel</span>
+            <span className="text-[11px] px-2 py-1 rounded-full bg-primary text-white capitalize">Aluguel</span>
           )}
         </div>
         {/* Faixa descritiva na base da imagem */}
@@ -46,7 +46,7 @@ export default function ListingCard({ p }: { p: any }) {
             </Link>
             <div className="text-sm text-gray-500">{p.address}</div>
           </div>
-          <button aria-label="Favoritar" className="text-gray-400 hover:text-indigo-600">♡</button>
+          <button aria-label="Favoritar" className="text-gray-400 hover:text-primary">♡</button>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-gray-700">
@@ -63,7 +63,7 @@ export default function ListingCard({ p }: { p: any }) {
         </div>
 
         <div className="mt-3 flex items-center gap-3">
-          <Link to={link} className="bg-black text-white rounded-md px-4 py-2 text-sm hover:bg-gray-900">Mais detalhes</Link>
+          <Link to={link} className="bg-primary text-white rounded-md px-4 py-2 text-sm hover:bg-primary-dark">Mais detalhes</Link>
           {/* Telefone removido do card; contato via detalhes/WhatsApp */}
         </div>
       </div>

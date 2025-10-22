@@ -54,14 +54,35 @@ export default function ManageCompanyUsers() {
 
       if (usersError) throw usersError
 
-      // Buscar emails dos usuários
+      // Buscar emails via Edge Function
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('Sessão não encontrada')
+      }
+
       const usersWithEmails = await Promise.all(
         (usersData || []).map(async (profile) => {
-          const { data: authData } = await supabase.auth.admin.getUserById(profile.id)
-          return {
-            ...profile,
-            email: authData.user?.email || 'N/A'
+          try {
+            const response = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-email`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${session.access_token}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: profile.id })
+              }
+            )
+            
+            if (response.ok) {
+              const { email } = await response.json()
+              return { ...profile, email }
+            }
+          } catch (e) {
+            console.error('Erro ao buscar email:', e)
           }
+          return { ...profile, email: 'N/A' }
         })
       )
 
@@ -108,7 +129,9 @@ export default function ManageCompanyUsers() {
             fullName,
             phone,
             role,
-            status: 'active'
+            status: 'active',
+            companyId: id,
+            companyRole
           })
         }
       )
@@ -117,19 +140,6 @@ export default function ManageCompanyUsers() {
         const errorText = await response.text()
         throw new Error(errorText || 'Erro ao criar usuário')
       }
-
-      const { userId } = await response.json()
-
-      // Atualizar profile com company_id e company_role
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          company_id: id,
-          company_role: companyRole
-        })
-        .eq('id', userId)
-
-      if (profileError) throw profileError
 
       alert('Usuário criado com sucesso!')
       setShowCreateForm(false)

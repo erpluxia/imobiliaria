@@ -94,22 +94,22 @@ function App() {
           <nav className="hidden sm:flex items-center gap-6 text-sm text-white">
             <NavLink
               to="/"
-              className={({isActive}) => `hover:text-[#D4AF37] ${isActive ? 'text-[#D4AF37] font-semibold' : 'text-white'}`}
+              className={({isActive}) => `hover:text-primary ${isActive ? 'text-primary font-semibold' : 'text-white'}`}
             >Home</NavLink>
             <NavLink
               to="/resultados"
-              className={({isActive}) => `hover:text-[#D4AF37] ${isActive ? 'text-[#D4AF37] font-semibold' : 'text-white'}`}
+              className={({isActive}) => `hover:text-primary ${isActive ? 'text-primary font-semibold' : 'text-white'}`}
             >Resultados</NavLink>
             <NavLink
               to="/lancamentos"
-              className={({isActive}) => `hover:text-[#D4AF37] ${isActive ? 'text-[#D4AF37] font-semibold' : 'text-white'}`}
+              className={({isActive}) => `hover:text-primary ${isActive ? 'text-primary font-semibold' : 'text-white'}`}
             >Lançamentos</NavLink>
             {company.youtube_url && (
               <a
                 href={company.youtube_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-[#D4AF37] text-white"
+                className="hover:text-primary text-white"
               >Canal</a>
             )}
           </nav>
@@ -118,7 +118,7 @@ function App() {
             {!user && (
               <Link
                 to="/login"
-                className="inline-flex border px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors"
+                className="inline-flex border px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm border-primary text-primary hover:bg-primary hover:text-black transition-colors"
               >Entrar</Link>
             )}
             {user && (
@@ -126,9 +126,9 @@ function App() {
                 <Link to="/perfil" className="inline-flex border border-gray-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-800 text-xs sm:text-sm">Meu Perfil</Link>
                 <Link to="/meus-imoveis" className="inline-flex border border-gray-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-gray-800 text-xs sm:text-sm">Meus Imóveis</Link>
                 {isAdmin && (
-                  <Link to="/admin" className="inline-flex border border-[#D4AF37] text-[#D4AF37] px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-[#D4AF37] hover:text-black text-xs sm:text-sm">Admin</Link>
+                  <Link to="/admin" className="inline-flex border border-primary text-primary px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-primary hover:text-black text-xs sm:text-sm">Admin</Link>
                 )}
-                <Link to="/anunciar" className="inline-flex bg-[#D4AF37] text-black px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-[#c7a233] text-xs sm:text-sm">Anunciar imóvel</Link>
+                <Link to="/anunciar" className="inline-flex bg-primary text-black px-3 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-primary-dark text-xs sm:text-sm">Anunciar imóvel</Link>
                 <button
                   title="Sair"
                   aria-label="Sair"
@@ -162,7 +162,7 @@ function App() {
           <div className="flex sm:hidden items-center gap-2 text-white">
             {!user && (
               <>
-                <Link to="/login" className="inline-flex border border-[#D4AF37] text-[#D4AF37] px-3 py-1.5 rounded-md hover:bg-[#D4AF37] hover:text-black text-xs">Entrar</Link>
+                <Link to="/login" className="inline-flex border border-primary text-primary px-3 py-1.5 rounded-md hover:bg-primary hover:text-black text-xs">Entrar</Link>
                 <div className="relative">
                   <button
                     aria-label="Menu"
@@ -188,7 +188,7 @@ function App() {
             )}
             {user && (
               <>
-                <Link to="/anunciar" className="inline-flex bg-[#D4AF37] text-black px-3 py-1.5 rounded-md hover:bg-[#c7a233] text-xs">Anunciar imóvel</Link>
+                <Link to="/anunciar" className="inline-flex bg-primary text-black px-3 py-1.5 rounded-md hover:bg-primary-dark text-xs">Anunciar imóvel</Link>
                 <div className="relative">
                   <button
                     aria-label="Menu"
@@ -263,7 +263,7 @@ function App() {
           href="https://erpluxia.com.br"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#D4AF37] hover:underline"
+          className="text-primary hover:underline"
         >
           Erpluxia
         </a>

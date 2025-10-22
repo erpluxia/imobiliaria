@@ -2,7 +2,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// CORS headers para permitir chamadas do browser (Vite/localhost)
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -14,6 +13,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: { ...corsHeaders } });
   }
+
   try {
     if (req.method !== 'POST') {
       return new Response('Method Not Allowed', { status: 405, headers: { ...corsHeaders } });
@@ -46,50 +46,24 @@ Deno.serve(async (req: Request) => {
       .eq('id', userId)
       .maybeSingle();
     if (profErr) return new Response(profErr.message, { status: 500, headers: { ...corsHeaders } });
-    if (prof?.role !== 'admin' && prof?.role !== 'super_admin') return new Response('User not allowed', { status: 403, headers: { ...corsHeaders } });
+    if (prof?.role !== 'admin' && prof?.role !== 'super_admin') {
+      return new Response('User not allowed', { status: 403, headers: { ...corsHeaders } });
+    }
 
     const body = await req.json().catch(() => ({}));
-    const { email, password, fullName, phone, role = 'user', status = 'active', companyId, companyRole = 'user' } = body as any;
+    const { userId: targetUserId } = body as any;
 
-    if (!email || !password) {
-      return new Response('email/password required', { status: 400, headers: { ...corsHeaders } });
-    }
-    if (role !== 'user' && role !== 'admin' && role !== 'super_admin') {
-      return new Response('invalid role', { status: 400, headers: { ...corsHeaders } });
-    }
-    if (status !== 'active' && status !== 'blocked') {
-      return new Response('invalid status', { status: 400, headers: { ...corsHeaders } });
-    }
-    if (companyRole !== 'user' && companyRole !== 'company_admin') {
-      return new Response('invalid company_role', { status: 400, headers: { ...corsHeaders } });
+    if (!targetUserId) {
+      return new Response('userId required', { status: 400, headers: { ...corsHeaders } });
     }
 
-    // Client com service role para criar usuário
+    // Client com service role para buscar email do usuário
     const service = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: created, error } = await service.auth.admin.createUser({
-      email,
-      password,
-      user_metadata: { full_name: fullName ?? null, phone: phone ?? null },
-      email_confirm: true,
-    });
+    const { data: userData, error } = await service.auth.admin.getUserById(targetUserId);
     if (error) return new Response(error.message, { status: 400, headers: { ...corsHeaders } });
 
-    const newId = created.user?.id;
-    if (newId) {
-      const { error: upErr } = await service.from('profiles').upsert({
-        id: newId,
-        full_name: fullName ?? null,
-        phone: phone ?? null,
-        role,
-        status,
-        company_id: companyId ?? null,
-        company_role: companyRole,
-      }, { onConflict: 'id' });
-      if (upErr) return new Response(upErr.message, { status: 400, headers: { ...corsHeaders } });
-    }
-
-    return new Response(JSON.stringify({ userId: newId, email }), {
+    return new Response(JSON.stringify({ email: userData.user?.email || 'N/A' }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
       status: 200,
     });

@@ -76,7 +76,7 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 pb-14">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Destaques</h2>
-          <a href="/resultados" className="text-sm text-indigo-600 hover:underline">Ver todos</a>
+          <a href="/resultados" className="text-sm text-primary hover:underline">Ver todos</a>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {loading && <div className="text-gray-600">Carregando...</div>}
