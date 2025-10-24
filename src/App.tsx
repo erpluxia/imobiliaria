@@ -27,6 +27,7 @@ import ManageDomains from './pages/super-admin/ManageDomains'
 import ManageCompanyUsers from './pages/super-admin/ManageCompanyUsers'
 import { supabase } from './lib/supabaseClient'
 import FloatingWhatsAppButton from './components/FloatingWhatsAppButton'
+import LogoutConfirmModal from './components/LogoutConfirmModal'
 import { useCompany } from './contexts/CompanyContext'
 import { useValidateDomain } from './hooks/useValidateDomain'
 
@@ -36,6 +37,8 @@ function App() {
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [allowSignups, setAllowSignups] = useState<boolean | null>(null)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   
   // Validar domínio do usuário logado
   useValidateDomain()
@@ -58,6 +61,19 @@ function App() {
     loadSettings()
     return () => { active = false }
   }, [])
+
+  async function handleLogout() {
+    setIsLoggingOut(true)
+    try {
+      await signOut()
+      setShowLogoutModal(false)
+      navigate('/')
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
   // Mostrar loading enquanto carrega empresa
   if (companyLoading) {
     return (
@@ -136,8 +152,8 @@ function App() {
                 <button
                   title="Sair"
                   aria-label="Sair"
-                  className="inline-flex items-center justify-center w-9 h-9 sm:w-9 sm:h-9 rounded-full border border-red-400 text-red-400 hover:bg-red-900/20"
-                  onClick={async () => { await signOut(); navigate('/') }}
+                  className="inline-flex items-center justify-center w-9 h-9 sm:w-9 sm:h-9 rounded-full border border-red-400 text-red-400 hover:bg-red-50 hover:border-red-500 hover:text-red-600 transition-colors"
+                  onClick={() => setShowLogoutModal(true)}
                 >
                   {/* Ícone Logout (seta saindo da porta) */}
                   <svg
@@ -218,8 +234,8 @@ function App() {
                       )}
                       <Link to="/perfil" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Meu Perfil</Link>
                       <button
-                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                        onClick={async () => { setMobileMenuOpen(false); await signOut(); navigate('/') }}
+                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        onClick={() => { setMobileMenuOpen(false); setShowLogoutModal(true) }}
                       >
                         Sair
                       </button>
@@ -274,6 +290,14 @@ function App() {
         .
       </footer>
       {company.whatsapp && <FloatingWhatsAppButton phone={company.whatsapp} />}
+      
+      {/* Modal de confirmação de logout */}
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutModal(false)}
+        isLoading={isLoggingOut}
+      />
     </div>
   )
 }

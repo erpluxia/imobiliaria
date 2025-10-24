@@ -125,10 +125,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {}
   }
 
-  async function signOut() {
-    await supabase.auth.signOut()
-  }
-
   const isAdmin = (profile?.role ?? 'user') === 'admin'
   const isSuperAdmin = (profile?.role ?? 'user') === 'super_admin'
   const isBlocked = (profile?.status ?? 'active') === 'blocked'
@@ -139,7 +135,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     signInWithPassword,
     signUp,
-    signOut,
+    signOut: async () => {
+      await supabase.auth.signOut()
+    },
     profile,
     isAdmin,
     isSuperAdmin,
