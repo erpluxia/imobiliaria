@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { useCompany } from '../contexts/CompanyContext'
 import { supabase } from '../lib/supabaseClient'
 
 export default function Login() {
@@ -13,7 +14,8 @@ export default function Login() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const navigate = useNavigate()
   const location = useLocation()
-  const { signInWithPassword } = useAuth()
+  const { signInWithPassword, signOut } = useAuth()
+  const { company } = useCompany()
   const [allowSignups, setAllowSignups] = useState<boolean | null>(null)
 
   useEffect(() => {
@@ -35,6 +37,14 @@ export default function Login() {
     return () => { active = false }
   }, [])
 
+  // Verificar se há erro de domínio na URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('error') === 'domain_mismatch') {
+      setSubmitError(`Você foi desconectado porque este domínio não corresponde à sua imobiliária. Por favor, acesse o domínio correto.`)
+    }
+  }, [location.search])
+
   function validate() {
     const next: typeof errors = {}
     if (!email.trim()) next.email = 'Informe seu e-mail'
@@ -51,15 +61,51 @@ export default function Login() {
     if (!validate()) return
     setSubmitting(true)
     setSubmitError(null)
+    
     const { error } = await signInWithPassword({ email, password })
-    setSubmitting(false)
+    
     if (error) {
+      setSubmitting(false)
       setSubmitError(error)
       return
     }
-    const params = new URLSearchParams(location.search)
-    const next = params.get('next') || '/'
-    navigate(next)
+
+    // Validar se o usuário pertence à empresa do domínio atual
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('company_id, role')
+          .eq('id', user.id)
+          .single()
+
+        // Super admins podem acessar qualquer domínio
+        if (profile?.role === 'super_admin') {
+          const params = new URLSearchParams(location.search)
+          const next = params.get('next') || '/'
+          navigate(next)
+          return
+        }
+
+        // Verificar se o company_id do usuário corresponde ao domínio
+        if (company && profile?.company_id !== company.id) {
+          await signOut()
+          setSubmitError(`Este usuário não tem permissão para acessar ${company.name}. Por favor, acesse o domínio correto da sua imobiliária.`)
+          setSubmitting(false)
+          return
+        }
+      }
+
+      const params = new URLSearchParams(location.search)
+      const next = params.get('next') || '/'
+      navigate(next)
+    } catch (err: any) {
+      await signOut()
+      setSubmitError('Erro ao validar acesso. Tente novamente.')
+      setSubmitting(false)
+    }
   }
 
   return (

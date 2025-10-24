@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
+import { useAuth } from '../../auth/AuthContext'
 import PageBreadcrumb from '../../../theme/src/components/common/PageBreadCrumb'
 import ComponentCard from '../../../theme/src/components/common/ComponentCard'
 import PageMeta from '../../../theme/src/components/common/PageMeta'
@@ -14,6 +15,7 @@ type Profile = {
 }
 
 export default function AdminUsers() {
+  const { profile, isSuperAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -25,10 +27,16 @@ export default function AdminUsers() {
       setLoading(true)
       setError(null)
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('profiles')
           .select('id, full_name, phone, role, status')
-          .order('full_name', { ascending: true })
+        
+        // Se não for super_admin, filtrar apenas usuários da mesma empresa
+        if (!isSuperAdmin && profile?.company_id) {
+          query = query.eq('company_id', profile.company_id)
+        }
+        
+        const { data, error } = await query.order('full_name', { ascending: true })
         if (error) throw error
         if (active) setProfiles((data ?? []) as any)
       } catch (e: any) {
@@ -39,7 +47,7 @@ export default function AdminUsers() {
     }
     load()
     return () => { active = false }
-  }, [])
+  }, [profile?.company_id, isSuperAdmin])
 
   async function updateRole(id: string, role: 'admin' | 'user') {
     setSavingId(id)

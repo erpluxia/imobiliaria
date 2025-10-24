@@ -11,7 +11,7 @@ interface AuthContextValue {
   signUp: (params: { email: string; password: string; fullName?: string; phone?: string }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
   // extras
-  profile: { role?: 'admin' | 'user' | 'super_admin'; status?: 'active' | 'blocked'; full_name?: string | null; phone?: string | null } | null
+  profile: { role?: 'admin' | 'user' | 'super_admin'; status?: 'active' | 'blocked'; full_name?: string | null; phone?: string | null; company_id?: string | null } | null
   isAdmin: boolean
   isSuperAdmin: boolean
   isBlocked: boolean
@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState<{ role?: 'admin' | 'user' | 'super_admin'; status?: 'active' | 'blocked'; full_name?: string | null; phone?: string | null } | null>(null)
+  const [profile, setProfile] = useState<{ role?: 'admin' | 'user' | 'super_admin'; status?: 'active' | 'blocked'; full_name?: string | null; phone?: string | null; company_id?: string | null } | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.session?.user?.id) {
         const { data: prof } = await supabase
           .from('profiles')
-          .select('role, status, full_name, phone')
+          .select('role, status, full_name, phone, company_id')
           .eq('id', data.session.user.id)
           .maybeSingle()
         if (mounted) setProfile(prof ?? null)
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         supabase
           .from('profiles')
-          .select('role, status, full_name, phone')
+          .select('role, status, full_name, phone, company_id')
           .eq('id', sess.user.id)
           .maybeSingle()
           .then(({ data }) => setProfile(data ?? null))

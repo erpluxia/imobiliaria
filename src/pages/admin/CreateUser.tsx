@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../auth/AuthContext'
 
 export default function CreateUser() {
+  const { profile } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -20,7 +22,15 @@ export default function CreateUser() {
     
     try {
       const { error } = await supabase.functions.invoke('admin-create-user', {
-        body: { email, password, fullName, phone, role, status },
+        body: { 
+          email, 
+          password, 
+          fullName, 
+          phone, 
+          role, 
+          status,
+          companyId: profile?.company_id 
+        },
       })
       if (error) throw new Error(error.message || 'Falha ao criar usuário')
       setEmail('')

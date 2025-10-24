@@ -28,6 +28,7 @@ import ManageCompanyUsers from './pages/super-admin/ManageCompanyUsers'
 import { supabase } from './lib/supabaseClient'
 import FloatingWhatsAppButton from './components/FloatingWhatsAppButton'
 import { useCompany } from './contexts/CompanyContext'
+import { useValidateDomain } from './hooks/useValidateDomain'
 
 function App() {
   const { user, signOut, isAdmin } = useAuth()
@@ -35,6 +36,9 @@ function App() {
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [allowSignups, setAllowSignups] = useState<boolean | null>(null)
+  
+  // Validar domínio do usuário logado
+  useValidateDomain()
 
   useEffect(() => {
     let active = true
